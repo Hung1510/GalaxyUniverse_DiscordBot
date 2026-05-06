@@ -1,0 +1,39 @@
+Mấy này để tui từ từ setup trước th á, sau này chỉnh ksao
+1. Phân quyền role
+Lệnh nào cho Admin/Mod dùng? Kiểu như
+
+Owner: g!prefix, g!setvoid
+Admin: g!ban, g!unban
+Mod: g!kick, g!mute, g!warn, g!clear, g!lock, g!void, g!free
+Mọi người: còn lại
+
+Còn nếu ko thì mấy lệnh quan trọng tui set cho admin với mod đều
+
+
+2. chỉ số xấp xỉ để tui setup trước
+Economy:
+
+g!daily: bao nhiêu xu / lần? cooldown 24h
+g!work: payout từ ~ đến ~? cooldown
+g!beg: payout? cooldown? khả năng thành công
+g!pay: min/max chuyển?
+Số dư khởi đầu cho user mới?
+g!rob: khả nnwng thành công, phạt khi fail, cooldown, ní bị cướp phải có tối thiểu bao nhiêu xu mới rob được
+
+Games:
+Bet min / max mỗi game?
+Cooldown mỗi game?
+House edge slot/dice (ví dụ slot trả 95%)
+
+Void:
+Default số lần nhập "glausan"
+"Sai thì reset" = reset luôn hay gacha khả nawg bị reset? bị reset  sau bao nhiêu lần sai
+Cooldown giữa các lần nhập
+Ai được dùng g!void? (chỉ mod, hay ai cũng được nếu trả phí?)
+
+Level:
+
+XP 1 tin nhắn
+Cooldown chống spam (vd 60s mới tính XP tiếp)
+Công thức lên level
+Lên level có thưởng xu không
