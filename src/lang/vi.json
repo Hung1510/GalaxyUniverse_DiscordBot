@@ -1,0 +1,39 @@
+{
+  "common": {
+    "error": "❌ Có lỗi xảy ra, thử lại sau nhé.",
+    "no_permission": "❌ Bạn không có quyền dùng lệnh này.",
+    "cooldown": "⏰ Đợi {seconds}s nữa rồi dùng tiếp nhé.",
+    "user_only": "❌ Lệnh này chỉ dùng được trong server.",
+    "invalid_user": "❌ Không tìm thấy user đó.",
+    "invalid_args": "❌ Sai cú pháp. Dùng: `{usage}`"
+  },
+  "user": {
+    "ping_pong": "🏓 Pong! WebSocket: `{ws}ms` · API: `{api}ms`",
+    "help_title": "🌌 Galaxy Universe — Danh sách lệnh",
+    "help_footer": "Prefix: {prefix} · Gõ {prefix}help <lệnh> để xem chi tiết",
+    "userinfo_title": "Thông tin về {username}",
+    "userinfo_id": "ID",
+    "userinfo_created": "Tạo Discord",
+    "userinfo_joined": "Vào server",
+    "userinfo_roles": "Roles ({count})",
+    "userinfo_no_roles": "Chưa có role nào"
+  },
+  "void": {
+    "jailed": "🕳 {user} đã bị nhốt vào Void {count} lần.\n📜 Lý do: {reason}",
+    "wrong_keyword": "💀 Sai rồi! Tiến độ reset về 0. Gõ `{keyword}` cho đúng đi.",
+    "progress": "🌑 {user} | Tiến độ: **{remaining}/{total}** lần",
+    "escaped": "🌌 {user} đã thoát khỏi Void! Chào mừng trở lại vũ trụ.",
+    "freed": "🕊️ {user} đã được {mod} ân xá khỏi Void.",
+    "not_jailed": "❌ User này không ở trong Void.",
+    "already_jailed": "❌ User đang ở trong Void rồi.",
+    "immunity": "❌ User vừa được thả, chờ {minutes} phút nữa mới nhốt lại được.",
+    "self_jail": "❌ Không tự nhốt mình được.",
+    "bot_jail": "❌ Không nhốt được bot.",
+    "wrong_channel": "❌ Phải gõ trong channel jail.",
+    "attempt_cooldown": "⏰ Đợi {seconds}s rồi gõ tiếp.",
+    "setup_done": "✅ Setup Void hoàn tất!\n🔒 Role tù: {role}\n📍 Channel jail: {channel}\n🛠️ Đã sync permission cho **{count}** channel.",
+    "setup_already": "⚠️ Void đã được setup rồi. Dùng `g!jailsetting` để sync lại permission.",
+    "setup_missing_perms": "❌ Bot thiếu quyền: `{perms}`. Vào Server Settings → Roles, thêm quyền cho role bot rồi thử lại.",
+    "sync_done": "✅ Đã sync permission cho **{count}** channel."
+  }
+}
