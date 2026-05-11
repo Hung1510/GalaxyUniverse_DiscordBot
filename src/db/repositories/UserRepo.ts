@@ -1,15 +1,3 @@
-/**
- * Repository for the `users` table.
- *
- * Pattern: every table gets its own repo. Commands and services call repo
- * methods, never raw SQL. This keeps SQL contained — if we ever migrate to
- * Postgres or want to add a cache, it's all in one place.
- *
- * better-sqlite3 prepares statements on first use and caches them. The
- * generics on `prepare<Params, Row>` give us type safety on bind args and
- * return rows.
- */
-
 import { db } from '../database.js';
 import { ECONOMY } from '../../config/constants.js';
 
@@ -58,16 +46,11 @@ export const UserRepo = {
     return stmts.get.get(userId);
   },
 
-  /**
-   * Get a user, creating them with starting balance if they don't exist.
-   * Used as the entry point for almost every command — guarantees a row.
-   */
   getOrCreate(userId: string): UserRow {
     const existing = stmts.get.get(userId);
     if (existing) return existing;
 
     stmts.insert.run(userId, ECONOMY.STARTING_BALANCE, Date.now());
-    // Re-fetch instead of constructing — let the DB defaults fill in.
     const created = stmts.get.get(userId);
     if (!created) throw new Error(`Failed to create user ${userId}`);
     return created;
@@ -77,7 +60,6 @@ export const UserRepo = {
     stmts.updateBalance.run(balance, userId);
   },
 
-  /** Add (or subtract, with negative) to balance atomically. */
   addBalance(userId: string, delta: number): void {
     stmts.addBalance.run(delta, userId);
   },

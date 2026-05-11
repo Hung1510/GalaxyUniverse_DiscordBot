@@ -1,14 +1,3 @@
-/**
- * Game logic constants — all the numbers we agreed on with the owner.
- *
- * Edit these to tune the bot's economy/level/void behavior. They're plain
- * constants (not config.json) because they're code-level decisions that need
- * to be re-tested when changed, not runtime knobs.
- *
- * `as const` makes TypeScript infer literal types so misuse is caught at
- * compile time. e.g. ECONOMY.DAILY_BASE has type `500`, not `number`.
- */
-
 export const LEVEL = {
   /** Min XP awarded per qualifying message. */
   XP_PER_MESSAGE_MIN: 15,

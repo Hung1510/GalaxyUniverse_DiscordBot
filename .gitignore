@@ -1,15 +1,58 @@
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+.yarn/
+
+# Build output
 dist/
+build/
+out/
+*.tsbuildinfo
+
+# Database (SQLite)
 data/
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
+*.sqlite
+*.sqlite3
+
+# Secrets
 .env
 .env.local
 .env.*.local
 src/config/config.json
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# pm2 runtime logs
+.pm2/
+
+# OS
 .DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDE / Editor
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+
+# Coverage / cache
+coverage/
+.nyc_output/
+.cache/
+
+# Misc
+*.tar.gz
+*.zip

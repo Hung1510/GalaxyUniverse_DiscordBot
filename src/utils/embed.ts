@@ -1,15 +1,7 @@
-/**
- * Embed factory with cosmic-themed defaults.
- *
- * Centralizing this means we can rebrand the bot's look (color, footer)
- * by editing one file, instead of every command.
- */
-
 import { EmbedBuilder, type ColorResolvable } from 'discord.js';
 
-/** Cosmic purple — matches the Galaxy Universe theme. */
 const THEME_COLOR: ColorResolvable = 0x6b2fb3;
-const FOOTER_TEXT = '🌌 Galaxy Universe';
+const FOOTER_TEXT = 'Galaxy Universe';
 
 export function cosmicEmbed(): EmbedBuilder {
   return new EmbedBuilder()
@@ -18,16 +10,15 @@ export function cosmicEmbed(): EmbedBuilder {
     .setTimestamp();
 }
 
-/** Shortcut for error embeds (red, ❌ icon). */
 export function errorEmbed(msg: string): EmbedBuilder {
   return new EmbedBuilder()
     .setColor(0xed4245)
-    .setDescription(`❌ ${msg}`);
+    .setDescription(` ${msg}`);
 }
 
 /** Shortcut for success embeds (green). */
 export function successEmbed(msg: string): EmbedBuilder {
   return new EmbedBuilder()
     .setColor(0x57f287)
-    .setDescription(`✅ ${msg}`);
+    .setDescription(` ${msg}`);
 }

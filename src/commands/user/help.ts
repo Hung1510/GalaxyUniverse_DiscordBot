@@ -1,30 +1,21 @@
-/**
- * g!help — shows commands grouped by category.
- *
- * For now this is a single embed. As the bot grows past ~20 commands we
- * may want to paginate (button-based) or accept `g!help <command>` for
- * detailed view. Both are easy to add later.
- */
-
 import { type Command } from '../../framework/Command.js';
 import { getAllCommands } from '../../framework/CommandHandler.js';
 import { cosmicEmbed } from '../../utils/embed.js';
 import { t } from '../../utils/lang.js';
 import { env } from '../../config/config.js';
 
-// Display order + nice Vietnamese labels for each category.
-// Categories not in this list still appear (alphabetically, at the end).
+// Display order and Vietnamese labels for each category.
 const CATEGORY_ORDER: Array<[string, string]> = [
-  ['user', '👤 Người dùng'],
-  ['economy', '💰 Kinh tế'],
-  ['games', '🎮 Game'],
-  ['shop', '🛒 Shop & Role'],
-  ['moderation', '🔒 Quản lý'],
-  ['ticket', '🎫 Hỗ trợ'],
-  ['galaxy', '🌌 Galaxy'],
-  ['void', '🕳 Void'],
-  ['level', '📊 Level'],
-  ['system', '⚙️ Hệ thống'],
+  ['user', 'Người dùng'],
+  ['economy', 'Kinh tế'],
+  ['games', 'Game'],
+  ['shop', 'Shop & Role'],
+  ['moderation', 'Quản lý'],
+  ['ticket', 'Hỗ trợ'],
+  ['galaxy', 'Galaxy'],
+  ['void', 'Void'],
+  ['level', 'Level'],
+  ['system', 'Hệ thống'],
 ];
 
 const command: Command = {
@@ -37,7 +28,7 @@ const command: Command = {
   async execute(ctx) {
     const all = getAllCommands();
 
-    // Group by category in a Map (preserves insertion order in JS).
+    // Group by category in a Map.
     const byCategory = new Map<string, Command[]>();
     for (const cmd of all) {
       const list = byCategory.get(cmd.category) ?? [];
@@ -49,7 +40,7 @@ const command: Command = {
       .setTitle(t('user.help_title'))
       .setFooter({ text: t('user.help_footer', { prefix: env.PREFIX }) });
 
-    // Render in our defined order first, then any unknown categories.
+    // Render categories in defined order first.
     const seen = new Set<string>();
     for (const [key, label] of CATEGORY_ORDER) {
       const cmds = byCategory.get(key);
@@ -64,7 +55,7 @@ const command: Command = {
       embed.addFields({ name: `${label} (${cmds.length})`, value: list });
     }
 
-    // Catch any categories not in CATEGORY_ORDER (e.g. typos, new ones).
+    // Catch categories not in CATEGORY_ORDER.
     for (const [key, cmds] of byCategory) {
       if (seen.has(key)) continue;
       const list = cmds.map((c) => `\`${env.PREFIX}${c.name}\``).join(' · ');

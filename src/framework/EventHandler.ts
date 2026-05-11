@@ -1,11 +1,3 @@
-/**
- * Event registry — loads files from src/events/ and registers each with
- * the Discord client.
- *
- * Each event file default-exports an object: { name, once?, execute }.
- * `name` is a discord.js event name like 'ready' or 'messageCreate'.
- */
-
 import { readdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -15,13 +7,6 @@ import { logger } from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-/**
- * Generic event handler shape.
- *
- * The `K extends keyof ClientEvents` generic ties the event name to the
- * exact arg types discord.js will pass. So an event with name "messageCreate"
- * gets `execute(message: Message)` typed automatically — no `any`.
- */
 export interface EventHandler<K extends keyof ClientEvents = keyof ClientEvents> {
   name: K;
   once?: boolean;
@@ -44,7 +29,6 @@ export async function loadEvents(client: Client): Promise<void> {
       continue;
     }
 
-    // .once vs .on: ready fires once per session, message events fire forever.
     if (handler.once) {
       client.once(handler.name, (...args) => handler.execute(...args));
     } else {

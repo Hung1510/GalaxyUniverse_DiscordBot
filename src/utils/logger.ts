@@ -1,18 +1,10 @@
-/**
- * Simple console logger with timestamps and level prefixes.
- *
- * No external dep — winston/pino would be overkill for one server.
- * If we ever need structured logs (log shipping, search), swap implementation
- * here without touching call sites.
- */
-
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const levelTags: Record<LogLevel, string> = {
-  debug: '🐛 DEBUG',
-  info: 'ℹ️  INFO ',
-  warn: '⚠️  WARN ',
-  error: '❌ ERROR',
+  debug: ' DEBUG',
+  info: ' INFO ',
+  warn: ' WARN ',
+  error: ' ERROR',
 };
 
 function timestamp(): string {

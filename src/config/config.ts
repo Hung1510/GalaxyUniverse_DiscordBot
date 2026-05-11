@@ -1,16 +1,3 @@
-/**
- * Centralized configuration loader.
- *
- * Reads two sources:
- *   1. Environment variables from .env (via dotenv) — secrets like the bot token.
- *   2. src/config/config.json — non-secret config like role IDs and channel IDs
- *      that the owner edits manually.
- *
- * Validates required fields at startup and exits the process if anything is
- * missing. This is "fail fast" — better than the bot booting with a missing
- * token and dying later in a confusing way.
- */
-
 import 'dotenv/config';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -18,10 +5,6 @@ import { dirname, resolve } from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// ────────────────────────────────────────────────────────────────────────────
-// Environment variables (.env)
-// ────────────────────────────────────────────────────────────────────────────
 
 interface EnvConfig {
   DISCORD_TOKEN: string;
@@ -34,8 +17,8 @@ function loadEnv(): EnvConfig {
   const required = ['DISCORD_TOKEN'] as const;
   for (const key of required) {
     if (!process.env[key]) {
-      console.error(`❌ Missing required env var: ${key}`);
-      console.error('   Copy .env.example to .env and fill it in.');
+      console.error(`Missing required env var: ${key}`);
+      console.error('  Copy .env.example to .env and fill it in.');
       process.exit(1);
     }
   }
@@ -48,9 +31,6 @@ function loadEnv(): EnvConfig {
   };
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// JSON config (role/channel IDs)
-// ────────────────────────────────────────────────────────────────────────────
 
 export interface JsonConfig {
   /** Role IDs that grant Mod-level permissions. */
@@ -68,8 +48,6 @@ export interface JsonConfig {
 }
 
 function loadJsonConfig(): JsonConfig {
-  // Try the real config.json; fall back to example so the bot can still boot
-  // for local development before the owner has filled in IDs.
   const configPath = resolve(__dirname, 'config.json');
   const examplePath = resolve(__dirname, 'config.example.json');
 
@@ -77,11 +55,11 @@ function loadJsonConfig(): JsonConfig {
   if (existsSync(configPath)) {
     pathToUse = configPath;
   } else if (existsSync(examplePath)) {
-    console.warn('⚠️  config.json not found, using config.example.json');
+    console.warn('config.json not found, using config.example.json');
     console.warn('   Many features (mod log, tickets) will be disabled.');
     pathToUse = examplePath;
   } else {
-    console.error('❌ Neither config.json nor config.example.json found');
+    console.error(' Neither config.json nor config.example.json found');
     process.exit(1);
   }
 
@@ -89,21 +67,18 @@ function loadJsonConfig(): JsonConfig {
     const raw = readFileSync(pathToUse, 'utf8');
     const parsed = JSON.parse(raw) as JsonConfig;
 
-    // Sanity-check the shape — JSON has no types, so we verify at runtime.
+    // Sanity-check the shape
     if (!Array.isArray(parsed.modRoleIds) || !Array.isArray(parsed.adminRoleIds)) {
       throw new Error('modRoleIds and adminRoleIds must be arrays');
     }
 
     return parsed;
   } catch (err) {
-    console.error(`❌ Failed to load config from ${pathToUse}:`, err);
+    console.error(`Failed to load config from ${pathToUse}:`, err);
     process.exit(1);
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Combined export
-// ────────────────────────────────────────────────────────────────────────────
 
 export const env = loadEnv();
 export const jsonConfig = loadJsonConfig();
