@@ -6,7 +6,7 @@ import { t } from '../../utils/lang.js';
 
 const command: Command = {
   name: 'jailsetting',
-  description: 'Sync lại permission jail cho tất cả channel (chạy sau khi thêm channel mới)',
+  description: 'Sync lại quyền Void cho mọi channel',
   category: 'void',
   cooldown: 30,
   permission: PermissionLevel.ADMIN,
@@ -14,22 +14,14 @@ const command: Command = {
   async execute(ctx) {
     const settings = GuildSettingsRepo.get(ctx.guild.id);
     if (!settings?.jail_role_id || !settings.jail_channel_id) {
-      await ctx.message.reply({
-        embeds: [errorEmbed('Chưa setup Void. Chạy `g!setup jail` trước.')],
-      });
+      await ctx.message.reply({ embeds: [errorEmbed(t('void.setup_first'))] });
       return;
     }
-
-    const working = await ctx.message.reply('🔄 Đang sync permission...');
-    const count = await VoidService.syncJailPermissions(
-      ctx.guild,
-      settings.jail_role_id,
-      settings.jail_channel_id,
-    );
-
+    const working = await ctx.message.reply('🔄 Đang sync perms...');
+    const synced = await VoidService.syncJailPermissions(ctx.guild, settings.jail_role_id, settings.jail_channel_id);
     await working.edit({
       content: '',
-      embeds: [successEmbed(t('void.sync_done', { count }))],
+      embeds: [successEmbed(t('void.sync_done', { n: String(synced) }))],
     });
   },
 };

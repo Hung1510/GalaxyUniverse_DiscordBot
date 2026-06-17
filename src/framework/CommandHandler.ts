@@ -1,130 +1,142 @@
+/**
+ * Command loader + dispatcher.
+ *
+ * New in v0.3:
+ *   - Per-command try/catch (item #2) — one broken command doesn't take
+ *     down the bot or leave the user staring at no response
+ *   - Command execution metrics (item #17) — count per command, hour
+ *     buckets for spotting abuse patterns
+ */
+
 import { readdirSync, statSync } from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve, basename } from 'node:path';
 import type { Client, Message } from 'discord.js';
+import { pathToFileURL } from 'node:url';
 import { type Command, type CommandContext, PermissionLevel } from './Command.js';
-import { hasPermission } from './Permissions.js';
-import * as Cooldowns from './Cooldowns.js';
-import { env } from '../config/config.js';
-import { t } from '../utils/lang.js';
-import { errorEmbed } from '../utils/embed.js';
+import { hasPermission, getPermissionLevel } from './Permissions.js';
+import { cooldowns } from './Cooldowns.js';
+import { metrics } from '../services/MetricsService.js';
+import { config } from '../config/config.js';
 import { logger } from '../utils/logger.js';
+import { errorEmbed } from '../utils/embed.js';
+import { t } from '../utils/lang.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const commands = new Map<string, Command>();
+const aliases = new Map<string, string>();
 
-function walkDir(dir: string): string[] {
-  const out: string[] = [];
-  for (const entry of readdirSync(dir)) {
-    const full = resolve(dir, entry);
-    if (statSync(full).isDirectory()) {
-      out.push(...walkDir(full));
-    } else if (entry.endsWith('.ts') || entry.endsWith('.js')) {
-      // Skip .d.ts files
-      if (entry.endsWith('.d.ts')) continue;
-      out.push(full);
-    }
-  }
-  return out;
+export function getAllCommands(): Map<string, Command> {
+  return commands;
 }
 
 export async function loadCommands(): Promise<void> {
-  const commandsDir = resolve(__dirname, '../commands');
-  const files = walkDir(commandsDir);
+  const commandsRoot = resolve(__dirname, '..', 'commands');
+  await loadFromDir(commandsRoot);
+  logger.info(`Loaded ${commands.size} commands (${aliases.size} aliases).`);
+}
 
-  for (const file of files) {
-    // Dynamic import requires file:// URL on Node ESM
-    const mod = (await import(pathToFileURL(file).href)) as { default?: Command };
-    const command = mod.default;
-
-    if (!command || typeof command.execute !== 'function') {
-      logger.warn(`Skipping ${file} — no default Command export`);
+async function loadFromDir(dir: string): Promise<void> {
+  for (const entry of readdirSync(dir)) {
+    const full = resolve(dir, entry);
+    if (statSync(full).isDirectory()) {
+      await loadFromDir(full);
       continue;
     }
+    if (!entry.endsWith('.js') && !entry.endsWith('.ts')) continue;
+    if (entry.endsWith('.d.ts')) continue;
 
-    if (commands.has(command.name)) {
-      logger.warn(`Duplicate command name: ${command.name} in ${file}`);
+    // Convert to file URL for ESM dynamic import (Windows compatibility).
+    const mod = (await import(pathToFileURL(full).href)) as { default?: Command };
+    const cmd = mod.default;
+    if (!cmd || typeof cmd.execute !== 'function') {
+      logger.warn(`Skipping ${basename(full)} — no default Command export.`);
       continue;
     }
-
-    commands.set(command.name, command);
-    for (const alias of command.aliases ?? []) {
-      if (commands.has(alias)) {
-        logger.warn(`Alias conflict: ${alias} (from ${command.name})`);
-        continue;
-      }
-      commands.set(alias, command);
+    if (commands.has(cmd.name)) {
+      logger.warn(`Duplicate command name "${cmd.name}" — skipping ${basename(full)}.`);
+      continue;
+    }
+    commands.set(cmd.name, cmd);
+    for (const alias of cmd.aliases ?? []) {
+      aliases.set(alias, cmd.name);
     }
   }
-
-  logger.info(`Loaded ${new Set(commands.values()).size} commands`);
 }
 
-export function getAllCommands(): Command[] {
-  return [...new Set(commands.values())];
-}
+export async function handleMessage(client: Client<true>, message: Message): Promise<void> {
+  if (message.author.bot) return;
+  if (!message.inGuild()) return;
+  if (!message.content.startsWith(config.prefix)) return;
 
-export async function handle(message: Message, client: Client<true>): Promise<void> {
-  if (!message.content.startsWith(env.PREFIX)) return;
-
-  const withoutPrefix = message.content.slice(env.PREFIX.length).trim();
+  const withoutPrefix = message.content.slice(config.prefix.length).trim();
   if (!withoutPrefix) return;
 
-  const args = withoutPrefix.split(/\s+/);
-  const commandName = args.shift()!.toLowerCase();
-  const command = commands.get(commandName);
-  if (!command) return; // unknown command — silent ignore (don't spam chat)
+  const tokens = withoutPrefix.split(/\s+/);
+  const nameOrAlias = tokens[0]!.toLowerCase();
+  const args = tokens.slice(1);
 
-  if (!message.inGuild()) {
-    await message.reply(t('common.user_only'));
-    return;
-  }
+  const resolvedName = commands.has(nameOrAlias)
+    ? nameOrAlias
+    : aliases.get(nameOrAlias);
+  if (!resolvedName) return;
+
+  const command = commands.get(resolvedName)!;
 
   const member = message.member;
-  if (!member) {
-    logger.warn(`No member object on message from ${message.author.id}`);
-    return;
-  }
+  if (!member) return;
 
+  // Permission check
   const required = command.permission ?? PermissionLevel.USER;
   if (!hasPermission(member, required)) {
-    await message.reply({ embeds: [errorEmbed(t('common.no_permission'))] });
+    await message.reply({ embeds: [errorEmbed(t('common.no_permission'))] }).catch(() => {});
     return;
   }
 
+  // Cooldown check
   if (command.cooldown && command.cooldown > 0) {
-    const remaining = Cooldowns.getRemaining(message.author.id, command.name);
+    const remaining = cooldowns.check(message.author.id, command.name, command.cooldown);
     if (remaining > 0) {
-      await message.reply({
-        embeds: [errorEmbed(t('common.cooldown', { seconds: remaining }))],
-      });
+      const secs = Math.ceil(remaining / 1000);
+      await message.reply({ embeds: [errorEmbed(t('common.cooldown', { secs: String(secs) }))] }).catch(() => {});
       return;
     }
-    Cooldowns.set(message.author.id, command.name, command.cooldown);
   }
 
-  const rawArgs = withoutPrefix.slice(commandName.length).trim();
-
   const ctx: CommandContext = {
-    message,
-    args,
-    rawArgs,
     client,
-    guild: message.guild,
+    message: message as Message<true>,
+    guild: message.guild!,
     member,
     channel: message.channel,
+    args,
+    rawArgs: args.join(' '),
   };
 
+  /**
+   * Item #2: Per-command try/catch.
+   *
+   * Without this, an unhandled throw in a command leaves the user with no
+   * feedback and pollutes the global unhandledRejection handler. We catch
+   * here, log with context, and apologise to the user.
+   */
+  const t0 = Date.now();
   try {
     await command.execute(ctx);
+    metrics.recordCommand(command.name, /* ok */ true, Date.now() - t0);
+    logger.info(
+      `cmd=${command.name} user=${message.author.tag} guild=${message.guildId} perm=${getPermissionLevel(member)} ok dur=${Date.now() - t0}ms`,
+    );
   } catch (err) {
-    logger.error(`Command "${command.name}" threw:`, err);
-    Cooldowns.clear(message.author.id, command.name);
-    try {
-      await message.reply({ embeds: [errorEmbed(t('common.error'))] });
-    } catch {
-    }
+    metrics.recordCommand(command.name, /* ok */ false, Date.now() - t0);
+    logger.error(
+      `cmd=${command.name} user=${message.author.tag} guild=${message.guildId} FAILED`,
+      err,
+    );
+    await message
+      .reply({ embeds: [errorEmbed(t('common.internal_error'))] })
+      .catch(() => {});
   }
 }

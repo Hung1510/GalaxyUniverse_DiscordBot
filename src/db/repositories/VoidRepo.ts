@@ -11,63 +11,33 @@ export interface VoidSentenceRow {
   last_attempt: number | null;
 }
 
-export interface VoidImmunityRow {
-  user_id: string;
-  guild_id: string;
-  released_at: number;
-}
-
 const stmts = {
   getSentence: db.prepare<[string], VoidSentenceRow>(
     'SELECT * FROM void_sentences WHERE user_id = ?',
   ),
-
-  createSentence: db.prepare<[string, string, number, number, string | null, string, number]>(`
-    INSERT INTO void_sentences (user_id, guild_id, total_count, remaining, reason, jailed_by, jailed_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `),
-
-  // Decrement remaining count and record attempt time.
-  decrementRemaining: db.prepare<[number, string]>(
-    'UPDATE void_sentences SET remaining = remaining - 1, last_attempt = ? WHERE user_id = ?',
+  insertSentence: db.prepare<[string, string, number, number, string | null, string, number]>(
+    'INSERT INTO void_sentences (user_id, guild_id, total_count, remaining, reason, jailed_by, jailed_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
   ),
-
-  // Reset progress to total_count on typo punishment.
-  resetProgress: db.prepare<[number, string]>(
-    'UPDATE void_sentences SET remaining = total_count, last_attempt = ? WHERE user_id = ?',
+  deleteSentence: db.prepare<[string]>('DELETE FROM void_sentences WHERE user_id = ?'),
+  updateLastAttempt: db.prepare<[number, string]>(
+    'UPDATE void_sentences SET last_attempt = ? WHERE user_id = ?',
   ),
-
-  // Mod override of remaining count.
+  decrementRemaining: db.prepare<[string]>(
+    'UPDATE void_sentences SET remaining = remaining - 1, last_attempt = strftime("%s","now")*1000 WHERE user_id = ?',
+  ),
   setRemaining: db.prepare<[number, string]>(
     'UPDATE void_sentences SET remaining = ? WHERE user_id = ?',
   ),
-
-  // Record attempt time without changing count (used for cooldown-only tracking).
-  touchAttempt: db.prepare<[number, string]>(
-    'UPDATE void_sentences SET last_attempt = ? WHERE user_id = ?',
+  getImmunity: db.prepare<[string], { released_at: number }>(
+    'SELECT released_at FROM void_immunity WHERE user_id = ?',
   ),
-
-  deleteSentence: db.prepare<[string]>(
-    'DELETE FROM void_sentences WHERE user_id = ?',
+  upsertImmunity: db.prepare<[string, string, number]>(
+    'INSERT INTO void_immunity (user_id, guild_id, released_at) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET released_at = excluded.released_at',
   ),
-
+  deleteImmunity: db.prepare<[string]>('DELETE FROM void_immunity WHERE user_id = ?'),
+  // New: list all currently-voided users in a guild
   listByGuild: db.prepare<[string], VoidSentenceRow>(
-    'SELECT * FROM void_sentences WHERE guild_id = ?',
-  ),
-
-  // Immunity table.
-  getImmunity: db.prepare<[string], VoidImmunityRow>(
-    'SELECT * FROM void_immunity WHERE user_id = ?',
-  ),
-
-  upsertImmunity: db.prepare<[string, string, number]>(`
-    INSERT INTO void_immunity (user_id, guild_id, released_at)
-    VALUES (?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET released_at = excluded.released_at
-  `),
-
-  deleteImmunity: db.prepare<[string]>(
-    'DELETE FROM void_immunity WHERE user_id = ?',
+    'SELECT * FROM void_sentences WHERE guild_id = ? ORDER BY jailed_at ASC',
   ),
 };
 
@@ -75,7 +45,9 @@ export const VoidRepo = {
   getSentence(userId: string): VoidSentenceRow | undefined {
     return stmts.getSentence.get(userId);
   },
-
+  listByGuild(guildId: string): VoidSentenceRow[] {
+    return stmts.listByGuild.all(guildId);
+  },
   createSentence(
     userId: string,
     guildId: string,
@@ -83,52 +55,32 @@ export const VoidRepo = {
     reason: string | null,
     jailedBy: string,
   ): VoidSentenceRow {
-    stmts.createSentence.run(userId, guildId, count, count, reason, jailedBy, Date.now());
-    const row = stmts.getSentence.get(userId);
-    if (!row) throw new Error(`Failed to create sentence for ${userId}`);
-    return row;
+    stmts.insertSentence.run(userId, guildId, count, count, reason, jailedBy, Date.now());
+    return stmts.getSentence.get(userId)!;
   },
-
-  // Returns the new remaining count, or 0 if the user has escaped.
-  decrementRemaining(userId: string): number {
-    stmts.decrementRemaining.run(Date.now(), userId);
-    const row = stmts.getSentence.get(userId);
-    return row?.remaining ?? 0;
-  },
-
-  resetProgress(userId: string): void {
-    stmts.resetProgress.run(Date.now(), userId);
-  },
-
-  setRemaining(userId: string, remaining: number): void {
-    stmts.setRemaining.run(remaining, userId);
-  },
-
-  touchAttempt(userId: string): void {
-    stmts.touchAttempt.run(Date.now(), userId);
-  },
-
   deleteSentence(userId: string): void {
     stmts.deleteSentence.run(userId);
   },
-
-  listByGuild(guildId: string): VoidSentenceRow[] {
-    return stmts.listByGuild.all(guildId);
+  decrementRemaining(userId: string): number {
+    stmts.decrementRemaining.run(userId);
+    const row = stmts.getSentence.get(userId);
+    return row?.remaining ?? 0;
   },
-
-  // Returns ms remaining on immunity, or 0 if free to re-jail.
-  immunityRemaining(userId: string, immunityMs: number): number {
+  setRemaining(userId: string, value: number): void {
+    stmts.setRemaining.run(value, userId);
+  },
+  updateLastAttempt(userId: string): void {
+    stmts.updateLastAttempt.run(Date.now(), userId);
+  },
+  immunityRemaining(userId: string, windowMs: number): number {
     const row = stmts.getImmunity.get(userId);
     if (!row) return 0;
-    const expires = row.released_at + immunityMs;
-    const left = expires - Date.now();
+    const left = row.released_at + windowMs - Date.now();
     return left > 0 ? left : 0;
   },
-
   setImmunity(userId: string, guildId: string): void {
     stmts.upsertImmunity.run(userId, guildId, Date.now());
   },
-
   clearImmunity(userId: string): void {
     stmts.deleteImmunity.run(userId);
   },

@@ -10,7 +10,7 @@ build/
 out/
 *.tsbuildinfo
 
-# Database (SQLite)
+# Database (SQLite) + logs (sensitive runtime data)
 data/
 *.db
 *.db-journal
@@ -18,41 +18,26 @@ data/
 *.db-shm
 *.sqlite
 *.sqlite3
+logs/
+*.log
 
 # Secrets
 .env
 .env.local
-.env.*.local
-src/config/config.json
+.env.production
+.env.development
+config.json
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# pm2 runtime logs
-.pm2/
-
-# OS
-.DS_Store
-Thumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-
-# IDE / Editor
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
+.DS_Store
 
-# Coverage / cache
-coverage/
-.nyc_output/
-.cache/
+# OS
+Thumbs.db
 
-# Misc
-*.tar.gz
-*.zip
+# pm2
+.pm2/
+ecosystem.config.js

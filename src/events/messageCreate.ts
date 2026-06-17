@@ -1,61 +1,82 @@
-import type { Message } from 'discord.js';
+/**
+ * Main message handler. Order matters here:
+ *
+ *   1. Filter bots and DMs early — no XP, no commands, no anything for those
+ *   2. Void glausan check — if user is jailed and typing in the void channel,
+ *      that supersedes everything else (don't grant XP for serving time)
+ *   3. XP grant — fire-and-forget (await for correct error handling, but
+ *      don't block command processing on a slow role-grant API call)
+ *   4. Command dispatch — only if message starts with prefix
+ *
+ * This event fires for EVERY message — keep it fast on the common path.
+ * The XP cooldown check happens in-memory before any DB hit.
+ */
+
+import type { Client, Message } from 'discord.js';
 import type { EventHandler } from '../framework/EventHandler.js';
-import { handle as handleCommand } from '../framework/CommandHandler.js';
+import { handleMessage } from '../framework/CommandHandler.js';
+import { VoidRepo } from '../db/repositories/VoidRepo.js';
 import { GuildSettingsRepo } from '../db/repositories/GuildSettingsRepo.js';
 import { VoidService } from '../services/VoidService.js';
-import { VOID } from '../config/constants.js';
-import { cosmicEmbed, errorEmbed } from '../utils/embed.js';
+import { LevelService } from '../services/LevelService.js';
 import { t } from '../utils/lang.js';
+import { logger } from '../utils/logger.js';
 
-const handler: EventHandler<'messageCreate'> = {
+const GLAUSAN_KEYWORD = 'glausan';
+
+const ev: EventHandler<'messageCreate'> = {
   name: 'messageCreate',
-
-  async execute(message: Message) {
+  async execute(client, message) {
     if (message.author.bot) return;
     if (!message.inGuild()) return;
 
-    // Void attempt: if user typed in the jail channel, handle as escape attempt.
-    const settings = GuildSettingsRepo.get(message.guild.id);
-    if (settings?.jail_channel_id === message.channel.id && message.member) {
-      const result = await VoidService.handleAttempt(message.member, message.content);
-      if (result) {
-        // User was jailed, handle the result.
-        if (result.type === 'cooldown') {
-          await message.reply({
-            embeds: [errorEmbed(t('void.attempt_cooldown', { seconds: result.secondsLeft }))],
-          });
+    // ── Void glausan tracking ──────────────────────────────────────────
+    // If the user is voided and types "glausan" in the jail channel,
+    // record the attempt. This path doesn't grant XP and doesn't run as
+    // a command.
+    try {
+      const settings = GuildSettingsRepo.get(message.guildId);
+      if (
+        settings?.jail_channel_id === message.channelId &&
+        message.content.trim().toLowerCase() === GLAUSAN_KEYWORD &&
+        VoidRepo.getSentence(message.author.id)
+      ) {
+        const member = message.member;
+        if (member) {
+          const result = await VoidService.recordAttempt(member, client as Client<true>);
+          if (result.type === 'cooldown') {
+            await message.reply(t('void.attempt_cooldown', { secs: String(result.secondsLeft) })).catch(() => {});
+          } else if (result.type === 'progress') {
+            await message.reply(t('void.attempt_progress', {
+              remaining: String(result.remaining),
+              total: String(result.total),
+            })).catch(() => {});
+          } else if (result.type === 'escaped') {
+            await message.reply(t('void.escaped')).catch(() => {});
+          }
           return;
         }
-        if (result.type === 'wrong') {
-          const msg = result.reset
-            ? t('void.wrong_keyword', { keyword: VOID.ESCAPE_KEYWORD })
-            : `Sai rồi. Còn lại: ${result.remaining}`;
-          await message.reply({ embeds: [errorEmbed(msg)] });
-          return;
-        }
-        if (result.type === 'escaped') {
-          const embed = cosmicEmbed().setDescription(
-            t('void.escaped', { user: `<@${message.author.id}>` }),
-          );
-          await message.reply({ embeds: [embed] });
-          return;
-        }
-        // progress
-        const embed = cosmicEmbed().setDescription(
-          t('void.progress', {
-            user: `<@${message.author.id}>`,
-            remaining: result.remaining,
-            total: result.total,
-          }),
-        );
-        await message.reply({ embeds: [embed] });
-        return;
       }
-      // Not jailed but typed in jail channel — let it fall through to command handling.
+    } catch (err) {
+      logger.error('Error in void attempt tracking:', err);
     }
 
-    await handleCommand(message, message.client);
+    // ── XP grant ───────────────────────────────────────────────────────
+    // Don't grant XP to users currently in the void — they're serving time,
+    // not chatting normally. (Cheap check; sentence row already cached
+    // by SQLite in practice.)
+    try {
+      if (!VoidRepo.getSentence(message.author.id)) {
+        await LevelService.maybeGrantXpFromMessage(message);
+      }
+    } catch (err) {
+      // Never let an XP failure break command dispatch
+      logger.error('XP grant failed:', err);
+    }
+
+    // ── Command dispatch ───────────────────────────────────────────────
+    await handleMessage(client as Client<true>, message as Message);
   },
 };
 
-export default handler;
+export default ev;

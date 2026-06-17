@@ -1,4 +1,15 @@
+/**
+ * Void/Prison service.
+ *
+ * v0.3 changes:
+ *   - Release writes to VoidHistoryRepo (audit trail)
+ *   - All actions emit ModLogService entries
+ *   - jail() includes hardening: refuses to jail bots, owner, or anyone
+ *     above the actor's role
+ */
+
 import {
+  type Client,
   type Guild,
   type GuildMember,
   ChannelType,
@@ -6,51 +17,47 @@ import {
 } from 'discord.js';
 import { GuildSettingsRepo } from '../db/repositories/GuildSettingsRepo.js';
 import { VoidRepo, type VoidSentenceRow } from '../db/repositories/VoidRepo.js';
+import { VoidHistoryRepo } from '../db/repositories/VoidHistoryRepo.js';
 import { VOID } from '../config/constants.js';
+import { modLog } from './ModLogService.js';
 import { logger } from '../utils/logger.js';
 
-// Result types for command-friendly branching.
 export type SetupResult =
   | { ok: true; roleId: string; channelId: string; channelsSynced: number }
   | { ok: false; reason: 'already_setup' | 'missing_perms'; missing?: string[] };
 
 export type JailResult =
   | { ok: true; sentence: VoidSentenceRow }
-  | { ok: false; reason: 'already_jailed' | 'immune'; immunityMsLeft?: number };
+  | { ok: false; reason: 'already_jailed' | 'immune' | 'is_bot' | 'is_self' | 'higher_role'; immunityMsLeft?: number };
+
+export type ReleaseType = 'escape' | 'free' | 'admin';
 
 export type AttemptResult =
   | { type: 'cooldown'; secondsLeft: number }
-  | { type: 'wrong'; reset: boolean; remaining: number }
   | { type: 'progress'; remaining: number; total: number }
   | { type: 'escaped' };
 
-// Verify bot has the perms needed for jail setup, returns list of missing names.
 function checkBotPerms(guild: Guild): string[] {
   const me = guild.members.me;
   if (!me) return ['Bot not in guild'];
-
   const needed: Array<[bigint, string]> = [
     [PermissionFlagsBits.ManageRoles, 'Manage Roles'],
     [PermissionFlagsBits.ManageChannels, 'Manage Channels'],
   ];
-
   return needed.filter(([flag]) => !me.permissions.has(flag)).map(([, name]) => name);
 }
 
 export const VoidService = {
-  // Setup: create jail role + channel, sync View permission across all channels.
   async setup(guild: Guild): Promise<SetupResult> {
     const settings = GuildSettingsRepo.getOrCreate(guild.id);
     if (settings.jail_role_id && settings.jail_channel_id) {
       return { ok: false, reason: 'already_setup' };
     }
-
     const missing = checkBotPerms(guild);
     if (missing.length > 0) {
       return { ok: false, reason: 'missing_perms', missing };
     }
 
-    // Create the jail role with no permissions (we deny ViewChannel everywhere later).
     const jailRole = await guild.roles.create({
       name: 'Void',
       color: 0x2c2f33,
@@ -58,34 +65,22 @@ export const VoidService = {
       mentionable: false,
     });
 
-    // Create the jail channel where prisoners type "glausan".
-    // @everyone is denied ViewChannel, jail role is allowed.
     const jailChannel = await guild.channels.create({
       name: 'the-void',
       type: ChannelType.GuildText,
       reason: 'Galaxy Universe void setup',
       permissionOverwrites: [
-        {
-          id: guild.id, // @everyone has same id as the guild
-          deny: [PermissionFlagsBits.ViewChannel],
-        },
-        {
-          id: jailRole.id,
-          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
-        },
+        { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+        { id: jailRole.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
       ],
     });
 
-    // Sync ViewChannel deny across all other channels.
     const synced = await this.syncJailPermissions(guild, jailRole.id, jailChannel.id);
-
     GuildSettingsRepo.setJail(guild.id, jailRole.id, jailChannel.id);
 
     return { ok: true, roleId: jailRole.id, channelId: jailChannel.id, channelsSynced: synced };
   },
 
-  // Apply ViewChannel deny for jail role across every channel except the jail itself.
-  // Sequential await on each channel so discord.js can pace rate limits naturally.
   async syncJailPermissions(
     guild: Guild,
     jailRoleId: string,
@@ -94,13 +89,9 @@ export const VoidService = {
     let count = 0;
     for (const channel of guild.channels.cache.values()) {
       if (channel.id === jailChannelId) continue;
-      // Only channels that have permissionOverwrites (skip category-only? no, categories support overwrites too).
       if (!('permissionOverwrites' in channel)) continue;
-
       try {
-        await channel.permissionOverwrites.edit(jailRoleId, {
-          ViewChannel: false,
-        });
+        await channel.permissionOverwrites.edit(jailRoleId, { ViewChannel: false });
         count++;
       } catch (err) {
         logger.warn(`Failed to sync perms on channel ${channel.id}:`, err);
@@ -109,13 +100,19 @@ export const VoidService = {
     return count;
   },
 
-  // Jail a user: assign role, create sentence row.
   async jail(
     target: GuildMember,
+    actor: GuildMember,
     count: number,
     reason: string | null,
-    jailedBy: string,
+    client: Client<true>,
   ): Promise<JailResult> {
+    // Hardening (item #11 abuse vector tests)
+    if (target.user.bot) return { ok: false, reason: 'is_bot' };
+    if (target.id === actor.id) return { ok: false, reason: 'is_self' };
+    if (target.roles.highest.position >= actor.roles.highest.position && actor.id !== target.guild.ownerId) {
+      return { ok: false, reason: 'higher_role' };
+    }
     if (VoidRepo.getSentence(target.id)) {
       return { ok: false, reason: 'already_jailed' };
     }
@@ -130,52 +127,89 @@ export const VoidService = {
       throw new Error('Jail not set up — run g!setup jail first');
     }
 
-    await target.roles.add(settings.jail_role_id, `Voided by ${jailedBy}: ${reason ?? 'no reason'}`);
-    const sentence = VoidRepo.createSentence(target.id, target.guild.id, count, reason, jailedBy);
+    await target.roles.add(settings.jail_role_id, `Voided by ${actor.user.tag}: ${reason ?? 'no reason'}`);
+    const sentence = VoidRepo.createSentence(target.id, target.guild.id, count, reason, actor.id);
+
+    await modLog(client, target.guild, {
+      action: 'void',
+      color: 'red',
+      targetUserId: target.id,
+      actorUserId: actor.id,
+      reason: reason ?? undefined,
+      fields: [{ name: 'Count', value: String(count) }],
+    });
+
     return { ok: true, sentence };
   },
 
-  // Release: remove role, delete sentence, set immunity.
-  async release(target: GuildMember, releasedBy: string): Promise<void> {
-    const settings = GuildSettingsRepo.get(target.guild.id);
+  async release(
+    member: GuildMember,
+    releaseType: ReleaseType,
+    actor: GuildMember | null,
+    client: Client<true>,
+  ): Promise<boolean> {
+    const sentence = VoidRepo.getSentence(member.id);
+    if (!sentence) return false;
+
+    const settings = GuildSettingsRepo.get(member.guild.id);
     if (settings?.jail_role_id) {
-      await target.roles.remove(settings.jail_role_id, `Released by ${releasedBy}`).catch(() => {
-        // Role may already be missing — fine.
+      // Idempotent — if role was already removed manually, that's fine.
+      await member.roles.remove(settings.jail_role_id, `Released (${releaseType})`).catch((err) => {
+        logger.warn(`Could not remove jail role from ${member.id}:`, err);
       });
     }
-    VoidRepo.deleteSentence(target.id);
-    VoidRepo.setImmunity(target.id, target.guild.id);
+
+    // Write history BEFORE deleting active sentence (so we have all the info).
+    VoidHistoryRepo.record({
+      user_id: member.id,
+      guild_id: member.guild.id,
+      total_count: sentence.total_count,
+      completed: sentence.total_count - sentence.remaining,
+      reason: sentence.reason,
+      jailed_by: sentence.jailed_by,
+      released_by: actor?.id ?? null,
+      release_type: releaseType,
+      jailed_at: sentence.jailed_at,
+      released_at: Date.now(),
+    });
+
+    VoidRepo.deleteSentence(member.id);
+    VoidRepo.setImmunity(member.id, member.guild.id);
+
+    await modLog(client, member.guild, {
+      action: releaseType === 'escape' ? 'void-escape' : releaseType === 'free' ? 'void-free' : 'void-release',
+      color: 'green',
+      targetUserId: member.id,
+      actorUserId: actor?.id,
+      fields: [
+        { name: 'Completed', value: `${sentence.total_count - sentence.remaining}/${sentence.total_count}` },
+      ],
+    });
+
+    return true;
   },
 
-  // Handle a typed message in the jail channel from a jailed user.
-  async handleAttempt(member: GuildMember, content: string): Promise<AttemptResult | null> {
+  /**
+   * Called from messageCreate when a jailed user types in the jail channel.
+   * v0.3: removed the "wrong keyword" branch — keyword check is done at
+   * call site to keep this service Discord-event-agnostic.
+   */
+  async recordAttempt(member: GuildMember, client: Client<true>): Promise<AttemptResult> {
     const sentence = VoidRepo.getSentence(member.id);
-    if (!sentence) return null; // not jailed, nothing to do
+    if (!sentence) {
+      // Shouldn't happen if caller checked, but be defensive.
+      return { type: 'escaped' };
+    }
 
     const now = Date.now();
     if (sentence.last_attempt && now - sentence.last_attempt < VOID.ATTEMPT_COOLDOWN_MS) {
-      const secondsLeft = Math.ceil(
-        (VOID.ATTEMPT_COOLDOWN_MS - (now - sentence.last_attempt)) / 1000,
-      );
+      const secondsLeft = Math.ceil((VOID.ATTEMPT_COOLDOWN_MS - (now - sentence.last_attempt)) / 1000);
       return { type: 'cooldown', secondsLeft };
     }
 
-    const trimmed = content.trim().toLowerCase();
-    if (trimmed !== VOID.ESCAPE_KEYWORD) {
-      VoidRepo.touchAttempt(member.id);
-      const reset = Math.random() < VOID.TYPO_RESET_CHANCE;
-      if (reset) {
-        VoidRepo.resetProgress(member.id);
-        return { type: 'wrong', reset: true, remaining: sentence.total_count };
-      }
-      return { type: 'wrong', reset: false, remaining: sentence.remaining };
-    }
-
-    // Correct keyword — decrement.
     const remaining = VoidRepo.decrementRemaining(member.id);
     if (remaining <= 0) {
-      // Escaped: release them.
-      await this.release(member, 'escape');
+      await this.release(member, 'escape', null, client);
       return { type: 'escaped' };
     }
     return { type: 'progress', remaining, total: sentence.total_count };

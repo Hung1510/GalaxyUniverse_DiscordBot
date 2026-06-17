@@ -7,36 +7,29 @@ import { logger } from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export interface EventHandler<K extends keyof ClientEvents = keyof ClientEvents> {
+export interface EventHandler<K extends keyof ClientEvents> {
   name: K;
   once?: boolean;
-  execute(...args: ClientEvents[K]): Promise<void> | void;
+  execute(client: Client, ...args: ClientEvents[K]): Promise<void> | void;
 }
 
 export async function loadEvents(client: Client): Promise<void> {
-  const eventsDir = resolve(__dirname, '../events');
-  const files = readdirSync(eventsDir).filter(
-    (f) => (f.endsWith('.ts') || f.endsWith('.js')) && !f.endsWith('.d.ts'),
-  );
-
-  for (const file of files) {
-    const full = resolve(eventsDir, file);
-    const mod = (await import(pathToFileURL(full).href)) as { default?: EventHandler };
-    const handler = mod.default;
-
-    if (!handler || typeof handler.execute !== 'function') {
-      logger.warn(`Skipping event file ${file} — no default EventHandler export`);
-      continue;
-    }
-
-    if (handler.once) {
-      client.once(handler.name, (...args) => handler.execute(...args));
+  const dir = resolve(__dirname, '..', 'events');
+  let count = 0;
+  for (const file of readdirSync(dir)) {
+    if (!file.endsWith('.js') && !file.endsWith('.ts')) continue;
+    if (file.endsWith('.d.ts')) continue;
+    const mod = (await import(pathToFileURL(resolve(dir, file)).href)) as {
+      default?: EventHandler<keyof ClientEvents>;
+    };
+    const ev = mod.default;
+    if (!ev) continue;
+    if (ev.once) {
+      client.once(ev.name, (...args) => Promise.resolve(ev.execute(client, ...args)).catch((e) => logger.error(`event ${ev.name} threw:`, e)));
     } else {
-      client.on(handler.name, (...args) => handler.execute(...args));
+      client.on(ev.name, (...args) => Promise.resolve(ev.execute(client, ...args)).catch((e) => logger.error(`event ${ev.name} threw:`, e)));
     }
-
-    logger.debug(`Registered event: ${handler.name} (once=${handler.once ?? false})`);
+    count++;
   }
-
-  logger.info(`Loaded ${files.length} event handlers`);
+  logger.info(`Loaded ${count} event handlers.`);
 }

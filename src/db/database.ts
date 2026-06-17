@@ -1,3 +1,10 @@
+/**
+ * Database initialization and migration runner.
+ *
+ * WAL mode + foreign_keys ON + a `closeDatabase()` export for graceful
+ * shutdown (item #1).
+ */
+
 import Database from 'better-sqlite3';
 import { readFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -8,23 +15,15 @@ import { logger } from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-//ensure  parent directory exists. On Railway the volume is mounted
 const dbPath = resolve(process.cwd(), env.DATABASE_PATH);
-const dbDir = dirname(dbPath);
-mkdirSync(dbDir, { recursive: true });
+mkdirSync(dirname(dbPath), { recursive: true });
 
 export const db = new Database(dbPath);
-
-// WAL mode
 db.pragma('journal_mode = WAL');
-
-// Enforce foreign key constraints
 db.pragma('foreign_keys = ON');
-
 logger.info(`Database opened: ${dbPath}`);
 
 function runMigrations(): void {
-  // Bootstrap the tracking table itself.
   db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
       filename   TEXT PRIMARY KEY,
@@ -35,36 +34,46 @@ function runMigrations(): void {
   const migrationsDir = resolve(__dirname, 'migrations');
   const files = readdirSync(migrationsDir)
     .filter((f) => f.endsWith('.sql'))
-    .sort(); // alphabetical
+    .sort();
 
-  // Find which already run.
-  const stmt = db.prepare<[string], { filename: string }>(
+  const checkStmt = db.prepare<[string], { filename: string }>(
     'SELECT filename FROM _migrations WHERE filename = ?',
   );
-  const insert = db.prepare<[string, number]>(
+  const recordStmt = db.prepare<[string, number]>(
     'INSERT INTO _migrations (filename, applied_at) VALUES (?, ?)',
   );
 
   for (const file of files) {
-    if (stmt.get(file)) continue; // already applied
-
+    if (checkStmt.get(file)) continue;
     const sql = readFileSync(resolve(migrationsDir, file), 'utf8');
-    logger.info(`Running migration: ${file}`);
-
+    // Wrap each migration in a transaction so partial application is impossible.
     const tx = db.transaction(() => {
       db.exec(sql);
-      insert.run(basename(file), Date.now());
+      recordStmt.run(file, Date.now());
     });
-
-    try {
-      tx();
-    } catch (err) {
-      logger.error(`Migration failed: ${file}`, err);
-      throw err;
-    }
+    tx();
+    logger.info(`Migration applied: ${basename(file)}`);
   }
-
-  logger.info(`Migrations up to date (${files.length} total)`);
 }
 
 runMigrations();
+
+/**
+ * Graceful database close (item #1).
+ *
+ * SQLite in WAL mode keeps a -wal and -shm sidecar file. If the process is
+ * killed mid-write, WAL may not be checkpointed back into the main db file —
+ * usually fine, but a clean close guarantees everything is committed.
+ *
+ * Called from index.ts shutdown handler.
+ */
+export function closeDatabase(): void {
+  try {
+    // Force a checkpoint so the .db file is fully up-to-date.
+    db.pragma('wal_checkpoint(TRUNCATE)');
+    db.close();
+    logger.info('Database closed cleanly.');
+  } catch (err) {
+    logger.error('Error closing database:', err);
+  }
+}

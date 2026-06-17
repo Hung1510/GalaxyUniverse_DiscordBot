@@ -1,34 +1,23 @@
-import { ActivityType, type Client } from 'discord.js';
+import type { Client } from 'discord.js';
 import type { EventHandler } from '../framework/EventHandler.js';
-import { env } from '../config/config.js';
+import { auditPermissions } from '../services/PermissionAuditService.js';
+import { startScheduler } from '../services/SchedulerService.js';
 import { logger } from '../utils/logger.js';
 
-const handler: EventHandler<'clientReady'> = {
+const ev: EventHandler<'clientReady'> = {
   name: 'clientReady',
   once: true,
+  async execute(client) {
+    const c = client as Client<true>;
+    logger.info(`Logged in as ${c.user.tag} (${c.user.id})`);
+    logger.info(`Watching ${c.guilds.cache.size} guild(s)`);
 
-  execute(client: Client<true>) {
-    const userTag = client.user.tag;
-    const guildCount = client.guilds.cache.size;
-    const userCount = client.guilds.cache.reduce(
-      (sum, g) => sum + g.memberCount,
-      0,
-    );
+    // Item #9 — startup permission audit
+    await auditPermissions(c);
 
-    logger.info(`Bot online: ${userTag}`);
-    logger.info(` Guilds: ${guildCount} · Members (cached): ${userCount}`);
-    logger.info(` Prefix: ${env.PREFIX}`);
-
-    client.user.setPresence({
-      activities: [
-        {
-          name: `🌌 vũ trụ | ${env.PREFIX}help`,
-          type: ActivityType.Watching,
-        },
-      ],
-      status: 'online',
-    });
+    // Item #1 — start DB-backed scheduler (sweeps every 30s)
+    startScheduler(c);
   },
 };
 
-export default handler;
+export default ev;

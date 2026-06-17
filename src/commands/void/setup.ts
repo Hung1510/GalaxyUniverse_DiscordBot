@@ -12,16 +12,13 @@ const command: Command = {
   permission: PermissionLevel.ADMIN,
 
   async execute(ctx) {
-    // Only one subcommand for now: "jail".
     const sub = ctx.args[0]?.toLowerCase();
     if (sub !== 'jail') {
       await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!setup jail' }))] });
       return;
     }
 
-    // Tell the user this might take a moment for big servers.
     const working = await ctx.message.reply('🛠️ Đang setup Void, đợi xíu...');
-
     const result = await VoidService.setup(ctx.guild);
 
     if (!result.ok) {
@@ -41,15 +38,11 @@ const command: Command = {
 
     await working.edit({
       content: '',
-      embeds: [
-        successEmbed(
-          t('void.setup_done', {
-            role: `<@&${result.roleId}>`,
-            channel: `<#${result.channelId}>`,
-            count: result.channelsSynced,
-          }),
-        ),
-      ],
+      embeds: [successEmbed(t('void.setup_done', {
+        role: `<@&${result.roleId}>`,
+        channel: `<#${result.channelId}>`,
+        n: String(result.channelsSynced),
+      }))],
     });
   },
 };

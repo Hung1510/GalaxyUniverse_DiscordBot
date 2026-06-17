@@ -1,16 +1,13 @@
 import type { GuildMember } from 'discord.js';
 import { PermissionLevel } from './Command.js';
-import { jsonConfig } from '../config/config.js';
+import { config } from '../config/config.js';
 
 export function getPermissionLevel(member: GuildMember): PermissionLevel {
-  if (member.guild.ownerId === member.id) return PermissionLevel.ADMIN;
-
-  const roles = member.roles.cache;
-
-  if (jsonConfig.adminRoleIds.some((id) => roles.has(id))) {
+  if (config.ownerIds.includes(member.id)) return PermissionLevel.OWNER;
+  if (member.roles.cache.some((r) => config.adminRoleIds.includes(r.id))) {
     return PermissionLevel.ADMIN;
   }
-  if (jsonConfig.modRoleIds.some((id) => roles.has(id))) {
+  if (member.roles.cache.some((r) => config.modRoleIds.includes(r.id))) {
     return PermissionLevel.MOD;
   }
   return PermissionLevel.USER;

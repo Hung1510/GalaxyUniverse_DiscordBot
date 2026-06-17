@@ -1,20 +1,26 @@
-import { type Command } from '../../framework/Command.js';
-import { t } from '../../utils/lang.js';
+import { type Command, PermissionLevel } from '../../framework/Command.js';
+import { cosmicEmbed } from '../../utils/embed.js';
+import { snapshot, formatUptime } from '../../services/HealthService.js';
 
 const command: Command = {
   name: 'ping',
-  description: 'Kiểm tra bot có online không',
+  description: 'Kiểm tra bot online + thông số sức khỏe',
   category: 'user',
   cooldown: 3,
+  permission: PermissionLevel.USER,
 
   async execute(ctx) {
-    // Send a placeholder, then edit it with the measured latency.
-    const sent = await ctx.message.reply('Pinging...');
-
-    const apiLatency = sent.createdTimestamp - ctx.message.createdTimestamp;
-    const wsLatency = ctx.client.ws.ping;
-
-    await sent.edit(t('user.ping_pong', { ws: wsLatency, api: apiLatency }));
+    const s = snapshot(ctx.client);
+    const embed = cosmicEmbed()
+      .setTitle('🛰️ Pong!')
+      .addFields(
+        { name: 'WebSocket', value: `${s.wsPingMs}ms`, inline: true },
+        { name: 'Database', value: `${s.dbQueryMs}ms`, inline: true },
+        { name: 'Memory', value: `${s.memMb} MB`, inline: true },
+        { name: 'Uptime', value: formatUptime(s.uptimeMs), inline: true },
+        { name: 'Commands run', value: String(s.totalCommands), inline: true },
+      );
+    await ctx.message.reply({ embeds: [embed] });
   },
 };
 

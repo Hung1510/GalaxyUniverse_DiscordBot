@@ -1,5 +1,4 @@
 import { db } from '../database.js';
-import { ECONOMY } from '../../config/constants.js';
 
 export interface UserRow {
   user_id: string;
@@ -12,67 +11,87 @@ export interface UserRow {
   created_at: number;
 }
 
+export interface LeaderboardRow {
+  user_id: string;
+  xp: number;
+  level: number;
+  rank: number;
+}
+
 const stmts = {
   get: db.prepare<[string], UserRow>('SELECT * FROM users WHERE user_id = ?'),
-
-  insert: db.prepare<[string, number, number]>(
-    'INSERT INTO users (user_id, balance, created_at) VALUES (?, ?, ?)',
+  insert: db.prepare<[string, number]>(
+    'INSERT INTO users (user_id, created_at) VALUES (?, ?)',
   ),
-
-  updateBalance: db.prepare<[number, string]>(
-    'UPDATE users SET balance = ? WHERE user_id = ?',
+  // Atomic XP add (avoids read-modify-write race if two messages land in same tick).
+  addXp: db.prepare<[number, string]>(
+    'UPDATE users SET xp = xp + ? WHERE user_id = ?',
   ),
-
-  addBalance: db.prepare<[number, string]>(
-    'UPDATE users SET balance = balance + ? WHERE user_id = ?',
+  setLevel: db.prepare<[number, string]>(
+    'UPDATE users SET level = ? WHERE user_id = ?',
   ),
-
-  updateXp: db.prepare<[number, number, string]>(
+  setXpAndLevel: db.prepare<[number, number, string]>(
     'UPDATE users SET xp = ?, level = ? WHERE user_id = ?',
   ),
-
-  topByXp: db.prepare<[number], UserRow>(
-    'SELECT * FROM users ORDER BY xp DESC LIMIT ?',
+  // Leaderboard by XP. RANK() requires SQLite >=3.25; better-sqlite3 ships modern.
+  topByXp: db.prepare<[number, number], LeaderboardRow>(
+    `SELECT user_id, xp, level,
+            RANK() OVER (ORDER BY xp DESC) AS rank
+     FROM users
+     WHERE xp > 0
+     ORDER BY xp DESC
+     LIMIT ? OFFSET ?`,
   ),
-
-  topByBalance: db.prepare<[number], UserRow>(
-    'SELECT * FROM users ORDER BY balance DESC LIMIT ?',
+  // Single-user rank = count of users with strictly more XP, plus one.
+  rankOf: db.prepare<[string], { rank: number }>(
+    `SELECT (
+       SELECT COUNT(*) + 1 FROM users u2
+       WHERE u2.xp > (SELECT xp FROM users WHERE user_id = ?)
+     ) AS rank`,
+  ),
+  countWithXp: db.prepare<[], { c: number }>(
+    'SELECT COUNT(*) AS c FROM users WHERE xp > 0',
   ),
 };
 
 export const UserRepo = {
-  /** Fetch a user; returns undefined if not found. */
   get(userId: string): UserRow | undefined {
     return stmts.get.get(userId);
   },
-
   getOrCreate(userId: string): UserRow {
-    const existing = stmts.get.get(userId);
-    if (existing) return existing;
-
-    stmts.insert.run(userId, ECONOMY.STARTING_BALANCE, Date.now());
-    const created = stmts.get.get(userId);
-    if (!created) throw new Error(`Failed to create user ${userId}`);
-    return created;
+    let row = stmts.get.get(userId);
+    if (!row) {
+      stmts.insert.run(userId, Date.now());
+      row = stmts.get.get(userId)!;
+    }
+    return row;
   },
-
-  setBalance(userId: string, balance: number): void {
-    stmts.updateBalance.run(balance, userId);
+  /** Atomically add XP, return the post-update row. */
+  addXp(userId: string, amount: number): UserRow {
+    this.getOrCreate(userId);
+    stmts.addXp.run(amount, userId);
+    return stmts.get.get(userId)!;
   },
-
-  addBalance(userId: string, delta: number): void {
-    stmts.addBalance.run(delta, userId);
+  setLevel(userId: string, level: number): void {
+    this.getOrCreate(userId);
+    stmts.setLevel.run(level, userId);
   },
-
-  setXp(userId: string, xp: number, level: number): void {
-    stmts.updateXp.run(xp, level, userId);
+  setXpAndLevel(userId: string, xp: number, level: number): void {
+    this.getOrCreate(userId);
+    stmts.setXpAndLevel.run(xp, level, userId);
   },
-
-  topByXp(limit = 10): UserRow[] {
-    return stmts.topByXp.all(limit);
+  /** Top N by XP starting from offset. Used for paginated leaderboards. */
+  topByXp(limit: number, offset = 0): LeaderboardRow[] {
+    return stmts.topByXp.all(limit, offset);
   },
-
-  topByBalance(limit = 10): UserRow[] {
-    return stmts.topByBalance.all(limit);
+  /** Server-wide rank (1-indexed) of a single user. Returns 0 if user has 0 XP. */
+  rankOf(userId: string): number {
+    const row = stmts.get.get(userId);
+    if (!row || row.xp === 0) return 0;
+    return stmts.rankOf.get(userId)?.rank ?? 0;
+  },
+  /** Total users with XP > 0. */
+  countWithXp(): number {
+    return stmts.countWithXp.get()?.c ?? 0;
   },
 };

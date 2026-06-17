@@ -1,82 +1,66 @@
-import { type GuildMember } from 'discord.js';
 import { type Command, PermissionLevel } from '../../framework/Command.js';
 import { VoidService } from '../../services/VoidService.js';
+import { successEmbed, errorEmbed } from '../../utils/embed.js';
 import { VOID } from '../../config/constants.js';
-import { cosmicEmbed, errorEmbed } from '../../utils/embed.js';
 import { t } from '../../utils/lang.js';
-
-// Parse a mention or raw ID from the first arg.
-async function resolveMember(ctx: {
-  args: string[];
-  guild: { members: GuildMember['guild']['members']; id: string };
-}): Promise<GuildMember | null> {
-  const first = ctx.args[0];
-  if (!first) return null;
-  const m = /^<@!?(\d+)>$/.exec(first) ?? /^(\d+)$/.exec(first);
-  if (!m) return null;
-  try {
-    return await ctx.guild.members.fetch(m[1]!);
-  } catch {
-    return null;
-  }
-}
 
 const command: Command = {
   name: 'void',
   description: 'Nhốt user vào Void',
-  usage: 'void @user [số_lần] [lý_do...]',
+  usage: 'void @user [count] [reason]',
   category: 'void',
   cooldown: 5,
   permission: PermissionLevel.MOD,
 
   async execute(ctx) {
-    const target = await resolveMember(ctx);
-    if (!target) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_user'))] });
+    // Improved error: distinguish "no args" from "user not found" (from earlier feedback).
+    if (ctx.args.length === 0) {
+      await ctx.message.reply({ embeds: [errorEmbed(t('void.usage_missing'))] });
       return;
     }
 
-    if (target.id === ctx.member.id) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('void.self_jail'))] });
-      return;
-    }
-    if (target.user.bot) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('void.bot_jail'))] });
+    const targetId = ctx.message.mentions.users.first()?.id ?? ctx.args[0];
+    if (!targetId) {
+      await ctx.message.reply({ embeds: [errorEmbed(t('void.usage_missing'))] });
       return;
     }
 
-    // Parse optional count, clamp to range.
-    const rawCount = ctx.args[1] ? parseInt(ctx.args[1], 10) : VOID.DEFAULT_COUNT;
-    const count = Number.isFinite(rawCount)
-      ? Math.max(VOID.MIN_COUNT, Math.min(VOID.MAX_COUNT, rawCount))
-      : VOID.DEFAULT_COUNT;
+    let target;
+    try {
+      target = await ctx.guild.members.fetch(targetId);
+    } catch {
+      await ctx.message.reply({ embeds: [errorEmbed(t('common.user_not_found'))] });
+      return;
+    }
 
-    // Everything after args[0] and args[1] is the reason.
-    const reason = ctx.args.slice(2).join(' ').trim() || null;
+    const countArg = ctx.args[1];
+    // VOID.DEFAULT_COUNT is `as const` (a literal type), so widen explicitly
+    // so we can reassign within the [1, MAX_COUNT] range.
+    let count: number = VOID.DEFAULT_COUNT;
+    if (countArg !== undefined) {
+      const parsed = parseInt(countArg, 10);
+      if (!isNaN(parsed)) {
+        count = Math.min(Math.max(parsed, 1), VOID.MAX_COUNT);
+      }
+    }
+    const reason = ctx.args.slice(2).join(' ') || null;
 
-    const result = await VoidService.jail(target, count, reason, ctx.member.id);
-
+    const result = await VoidService.jail(target, ctx.member, count, reason, ctx.client);
     if (!result.ok) {
-      if (result.reason === 'already_jailed') {
-        await ctx.message.reply({ embeds: [errorEmbed(t('void.already_jailed'))] });
-        return;
-      }
-      if (result.reason === 'immune') {
-        const minutes = Math.ceil((result.immunityMsLeft ?? 0) / 60_000);
-        await ctx.message.reply({ embeds: [errorEmbed(t('void.immunity', { minutes }))] });
-        return;
-      }
+      const msgKey = `void.fail_${result.reason}`;
+      const extra = result.reason === 'immune'
+        ? { secs: String(Math.ceil((result.immunityMsLeft ?? 0) / 1000)) }
+        : undefined;
+      await ctx.message.reply({ embeds: [errorEmbed(t(msgKey, extra))] });
       return;
     }
 
-    const embed = cosmicEmbed().setDescription(
-      t('void.jailed', {
-        user: `<@${target.id}>`,
-        count,
-        reason: reason ?? 'không có',
-      }),
-    );
-    await ctx.message.reply({ embeds: [embed] });
+    await ctx.message.reply({
+      embeds: [successEmbed(t('void.jailed', {
+        target: `<@${target.id}>`,
+        count: String(count),
+      }))],
+    });
   },
 };
 
