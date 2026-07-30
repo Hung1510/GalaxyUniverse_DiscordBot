@@ -13,7 +13,7 @@ const command: Command = {
   permission: PermissionLevel.MOD,
 
   async execute(ctx) {
-    // Improved error: distinguish "no args" from "user not found" (from earlier feedback).
+
     if (ctx.args.length === 0) {
       await ctx.message.reply({ embeds: [errorEmbed(t('void.usage_missing'))] });
       return;
@@ -34,8 +34,7 @@ const command: Command = {
     }
 
     const countArg = ctx.args[1];
-    // VOID.DEFAULT_COUNT is `as const` (a literal type), so widen explicitly
-    // so we can reassign within the [1, MAX_COUNT] range.
+
     let count: number = VOID.DEFAULT_COUNT;
     if (countArg !== undefined) {
       const parsed = parseInt(countArg, 10);

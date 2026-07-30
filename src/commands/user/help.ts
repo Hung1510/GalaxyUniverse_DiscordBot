@@ -43,7 +43,6 @@ const command: Command = {
       return;
     }
 
-    // List view — group by category, show only commands user can run
     const byCategory = new Map<string, Command[]>();
     for (const cmd of all.values()) {
       if (cmd.hidden) continue;

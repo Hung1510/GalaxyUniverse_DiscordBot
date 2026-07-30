@@ -30,12 +30,9 @@ export interface Command {
   description: string;
   usage?: string;
   category: string;
-  /** Cooldown in seconds. */
-  cooldown?: number;
-  /** Minimum permission level needed (defaults to USER). */
-  permission?: PermissionLevel;
-  /** Hide from g!help (still callable). */
-  hidden?: boolean;
+    cooldown?: number;
+    permission?: PermissionLevel;
+    hidden?: boolean;
 
   execute(ctx: CommandContext): Promise<void>;
 }

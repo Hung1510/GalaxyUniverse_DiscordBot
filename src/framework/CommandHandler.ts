@@ -1,12 +1,3 @@
-/**
- * Command loader + dispatcher.
- *
- * New in v0.3:
- *   - Per-command try/catch (item #2) — one broken command doesn't take
- *     down the bot or leave the user staring at no response
- *   - Command execution metrics (item #17) — count per command, hour
- *     buckets for spotting abuse patterns
- */
 
 import { readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -48,7 +39,6 @@ async function loadFromDir(dir: string): Promise<void> {
     if (!entry.endsWith('.js') && !entry.endsWith('.ts')) continue;
     if (entry.endsWith('.d.ts')) continue;
 
-    // Convert to file URL for ESM dynamic import (Windows compatibility).
     const mod = (await import(pathToFileURL(full).href)) as { default?: Command };
     const cmd = mod.default;
     if (!cmd || typeof cmd.execute !== 'function') {
@@ -88,14 +78,12 @@ export async function handleMessage(client: Client<true>, message: Message): Pro
   const member = message.member;
   if (!member) return;
 
-  // Permission check
   const required = command.permission ?? PermissionLevel.USER;
   if (!hasPermission(member, required)) {
     await message.reply({ embeds: [errorEmbed(t('common.no_permission'))] }).catch(() => {});
     return;
   }
 
-  // Cooldown check
   if (command.cooldown && command.cooldown > 0) {
     const remaining = cooldowns.check(message.author.id, command.name, command.cooldown);
     if (remaining > 0) {
@@ -115,22 +103,15 @@ export async function handleMessage(client: Client<true>, message: Message): Pro
     rawArgs: args.join(' '),
   };
 
-  /**
-   * Item #2: Per-command try/catch.
-   *
-   * Without this, an unhandled throw in a command leaves the user with no
-   * feedback and pollutes the global unhandledRejection handler. We catch
-   * here, log with context, and apologise to the user.
-   */
-  const t0 = Date.now();
+    const t0 = Date.now();
   try {
     await command.execute(ctx);
-    metrics.recordCommand(command.name, /* ok */ true, Date.now() - t0);
+    metrics.recordCommand(command.name,  true, Date.now() - t0);
     logger.info(
       `cmd=${command.name} user=${message.author.tag} guild=${message.guildId} perm=${getPermissionLevel(member)} ok dur=${Date.now() - t0}ms`,
     );
   } catch (err) {
-    metrics.recordCommand(command.name, /* ok */ false, Date.now() - t0);
+    metrics.recordCommand(command.name,  false, Date.now() - t0);
     logger.error(
       `cmd=${command.name} user=${message.author.tag} guild=${message.guildId} FAILED`,
       err,

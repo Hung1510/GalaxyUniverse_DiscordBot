@@ -1,12 +1,3 @@
-/**
- * g!givexp @user <amount>
- *
- * Negative amounts are allowed (clamped to 0 inside LevelService.giveXp).
- * Useful for "fixing" abuse — remove ill-gotten XP.
- *
- * Whether a level-down should remove role rewards: NO for now. MEE6 default
- * is "rewards stick". If owner wants stricter behavior, separate command later.
- */
 
 import { type Command, PermissionLevel } from '../../framework/Command.js';
 import { LevelService } from '../../services/LevelService.js';

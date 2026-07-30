@@ -1,9 +1,3 @@
-/**
- * Database initialization and migration runner.
- *
- * WAL mode + foreign_keys ON + a `closeDatabase()` export for graceful
- * shutdown (item #1).
- */
 
 import Database from 'better-sqlite3';
 import { readFileSync, readdirSync, mkdirSync } from 'node:fs';
@@ -46,7 +40,7 @@ function runMigrations(): void {
   for (const file of files) {
     if (checkStmt.get(file)) continue;
     const sql = readFileSync(resolve(migrationsDir, file), 'utf8');
-    // Wrap each migration in a transaction so partial application is impossible.
+
     const tx = db.transaction(() => {
       db.exec(sql);
       recordStmt.run(file, Date.now());
@@ -58,18 +52,9 @@ function runMigrations(): void {
 
 runMigrations();
 
-/**
- * Graceful database close (item #1).
- *
- * SQLite in WAL mode keeps a -wal and -shm sidecar file. If the process is
- * killed mid-write, WAL may not be checkpointed back into the main db file —
- * usually fine, but a clean close guarantees everything is committed.
- *
- * Called from index.ts shutdown handler.
- */
 export function closeDatabase(): void {
   try {
-    // Force a checkpoint so the .db file is fully up-to-date.
+
     db.pragma('wal_checkpoint(TRUNCATE)');
     db.close();
     logger.info('Database closed cleanly.');

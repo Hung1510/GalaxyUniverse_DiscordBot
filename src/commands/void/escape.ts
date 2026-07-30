@@ -9,7 +9,7 @@ const command: Command = {
   category: 'void',
   cooldown: 3,
   permission: PermissionLevel.USER,
-  hidden: true, // The real escape mechanic is typing "glausan" — this command is informational only
+  hidden: true,
 
   async execute(ctx) {
     if (!VoidRepo.getSentence(ctx.member.id)) {

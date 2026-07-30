@@ -1,20 +1,4 @@
 #!/usr/bin/env node
-/**
- * Backup restore verification (item #3).
- *
- * "A backup you've never restored is not a backup."
- *
- * This script:
- *   1. Picks the most recent backup file
- *   2. Opens it as a SQLite db
- *   3. Verifies _migrations + users tables exist
- *   4. Reports row counts so you can sanity-check size matches prod
- *
- * Run: `npm run backup:test`
- *
- * In a real restore: stop the bot, mv data/galaxy.db data/galaxy.db.bak,
- * cp data/backups/galaxy-XXX.db data/galaxy.db, restart.
- */
 
 import Database from 'better-sqlite3';
 import { readdirSync, statSync } from 'node:fs';
@@ -54,7 +38,6 @@ function main() {
       console.log(`  - ${t.name}: ${count.n} rows`);
     }
 
-    // Sanity: must have _migrations
     const mig = db.prepare('SELECT filename FROM _migrations ORDER BY filename').all();
     console.log(`[restore-test] Migrations applied: ${mig.map((r) => r.filename).join(', ')}`);
 

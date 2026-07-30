@@ -23,7 +23,7 @@ const stmts = {
   insert: db.prepare<[string, number]>(
     'INSERT INTO users (user_id, created_at) VALUES (?, ?)',
   ),
-  // Atomic XP add (avoids read-modify-write race if two messages land in same tick).
+
   addXp: db.prepare<[number, string]>(
     'UPDATE users SET xp = xp + ? WHERE user_id = ?',
   ),
@@ -33,7 +33,7 @@ const stmts = {
   setXpAndLevel: db.prepare<[number, number, string]>(
     'UPDATE users SET xp = ?, level = ? WHERE user_id = ?',
   ),
-  // Leaderboard by XP. RANK() requires SQLite >=3.25; better-sqlite3 ships modern.
+
   topByXp: db.prepare<[number, number], LeaderboardRow>(
     `SELECT user_id, xp, level,
             RANK() OVER (ORDER BY xp DESC) AS rank
@@ -42,7 +42,7 @@ const stmts = {
      ORDER BY xp DESC
      LIMIT ? OFFSET ?`,
   ),
-  // Single-user rank = count of users with strictly more XP, plus one.
+
   rankOf: db.prepare<[string], { rank: number }>(
     `SELECT (
        SELECT COUNT(*) + 1 FROM users u2
@@ -66,8 +66,7 @@ export const UserRepo = {
     }
     return row;
   },
-  /** Atomically add XP, return the post-update row. */
-  addXp(userId: string, amount: number): UserRow {
+    addXp(userId: string, amount: number): UserRow {
     this.getOrCreate(userId);
     stmts.addXp.run(amount, userId);
     return stmts.get.get(userId)!;
@@ -80,18 +79,15 @@ export const UserRepo = {
     this.getOrCreate(userId);
     stmts.setXpAndLevel.run(xp, level, userId);
   },
-  /** Top N by XP starting from offset. Used for paginated leaderboards. */
-  topByXp(limit: number, offset = 0): LeaderboardRow[] {
+    topByXp(limit: number, offset = 0): LeaderboardRow[] {
     return stmts.topByXp.all(limit, offset);
   },
-  /** Server-wide rank (1-indexed) of a single user. Returns 0 if user has 0 XP. */
-  rankOf(userId: string): number {
+    rankOf(userId: string): number {
     const row = stmts.get.get(userId);
     if (!row || row.xp === 0) return 0;
     return stmts.rankOf.get(userId)?.rank ?? 0;
   },
-  /** Total users with XP > 0. */
-  countWithXp(): number {
+    countWithXp(): number {
     return stmts.countWithXp.get()?.c ?? 0;
   },
 };

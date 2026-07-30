@@ -1,11 +1,3 @@
-/**
- * Audit trail for completed void sentences (item #8 / Lunari voidhistory).
- *
- * VoidRepo tracks current/active sentences; this tracks history. Every
- * release writes a row here so staff can review patterns:
- *   - "How many times has @user been voided this month?"
- *   - "Did @mod use g!free justly, or are they abusing it?"
- */
 
 import { db } from '../database.js';
 

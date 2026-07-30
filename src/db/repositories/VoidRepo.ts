@@ -35,7 +35,7 @@ const stmts = {
     'INSERT INTO void_immunity (user_id, guild_id, released_at) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET released_at = excluded.released_at',
   ),
   deleteImmunity: db.prepare<[string]>('DELETE FROM void_immunity WHERE user_id = ?'),
-  // New: list all currently-voided users in a guild
+
   listByGuild: db.prepare<[string], VoidSentenceRow>(
     'SELECT * FROM void_sentences WHERE guild_id = ? ORDER BY jailed_at ASC',
   ),

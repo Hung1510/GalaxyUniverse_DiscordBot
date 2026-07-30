@@ -1,16 +1,3 @@
-/**
- * Restart-safe scheduler (item #1).
- *
- * setTimeout dies on restart. For anything time-based (future: time-based
- * void release, temporary bans, mute expiry, reminders), use this.
- *
- * Currently no consumers, but the plumbing's here so adding one is just
- * `register(taskType, handler)` + `ScheduledTaskRepo.schedule(...)` at
- * the call site.
- *
- * Sweep cadence: 30s. Good enough for minute-resolution; not for
- * second-precise scheduling.
- */
 
 import type { Client } from 'discord.js';
 import { ScheduledTaskRepo, type ScheduledTaskRow } from '../db/repositories/ScheduledTaskRepo.js';
@@ -38,8 +25,7 @@ async function processTask(client: Client<true>, task: ScheduledTaskRow): Promis
   } catch (err) {
     logger.error(`Scheduled task ${task.id} (${task.task_type}) failed:`, err);
   } finally {
-    // Remove regardless of success/failure to avoid infinite retry loops.
-    // If a task needs retry, the handler should re-schedule itself.
+
     ScheduledTaskRepo.remove(task.id);
   }
 }
@@ -53,7 +39,7 @@ async function sweep(client: Client<true>): Promise<void> {
 
 export function startScheduler(client: Client<true>, intervalMs = 30_000): void {
   if (sweepInterval) return;
-  // Immediate sweep on startup (catch up on tasks that came due during downtime)
+
   void sweep(client);
   sweepInterval = setInterval(() => void sweep(client), intervalMs);
   logger.info(`Scheduler started (sweep every ${intervalMs / 1000}s).`);

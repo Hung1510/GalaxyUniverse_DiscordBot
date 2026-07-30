@@ -1,18 +1,3 @@
-/**
- * Startup permission audit (item #9).
- *
- * On `ready`, sweep every guild the bot is in and verify it has the
- * permissions it needs:
- *   - Send Messages, Embed Links (basic)
- *   - Manage Roles (for void)
- *   - Manage Channels (for void setup)
- *
- * Logs a warning per guild for any missing permission. Doesn't fail
- * hard — bot stays online, but you'll see in logs exactly which guild
- * has a broken config.
- *
- * Also verifies the mod-log channel (if configured) is reachable.
- */
 
 import { type Client, PermissionFlagsBits, ChannelType } from 'discord.js';
 import { config } from '../config/config.js';
@@ -45,14 +30,12 @@ export async function auditPermissions(client: Client<true>): Promise<AuditResul
       continue;
     }
 
-    // Server-level permissions
     for (const [flag, name] of requiredBotPerms) {
       if (!me.permissions.has(flag)) {
         issues.push(`Missing perm: ${name}`);
       }
     }
 
-    // Void setup sanity: if jail role/channel are set in DB, verify they still exist
     const settings = GuildSettingsRepo.get(guild.id);
     if (settings?.jail_role_id) {
       const role = guild.roles.cache.get(settings.jail_role_id);
@@ -69,7 +52,6 @@ export async function auditPermissions(client: Client<true>): Promise<AuditResul
       }
     }
 
-    // Mod-log channel reachability
     if (config.modLogChannelId) {
       const ch = guild.channels.cache.get(config.modLogChannelId);
       if (ch && ch.type !== ChannelType.GuildText) {

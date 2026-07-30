@@ -12,10 +12,8 @@ const ev: EventHandler<'clientReady'> = {
     logger.info(`Logged in as ${c.user.tag} (${c.user.id})`);
     logger.info(`Watching ${c.guilds.cache.size} guild(s)`);
 
-    // Item #9 — startup permission audit
     await auditPermissions(c);
 
-    // Item #1 — start DB-backed scheduler (sweeps every 30s)
     startScheduler(c);
   },
 };

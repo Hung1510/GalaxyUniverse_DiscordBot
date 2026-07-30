@@ -1,20 +1,10 @@
-/**
- * Lightweight metrics (item #17).
- *
- * In-memory only — resets on restart. Good enough for spotting "huh,
- * @user ran g!void 50 times in an hour" patterns.
- *
- * Exposed via g!stats (owner-only) for ad-hoc viewing. For production
- * dashboards, swap this for Prometheus or similar later.
- */
 
 export interface CommandMetric {
   total: number;
   succeeded: number;
   failed: number;
   totalDurationMs: number;
-  /** Per-hour buckets, key = unix ms aligned to hour. Last 24 hours kept. */
-  hourly: Map<number, number>;
+    hourly: Map<number, number>;
 }
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -37,7 +27,6 @@ class MetricsStore {
     const hourKey = Math.floor(Date.now() / HOUR_MS) * HOUR_MS;
     m.hourly.set(hourKey, (m.hourly.get(hourKey) ?? 0) + 1);
 
-    // Prune old hours
     const cutoff = hourKey - KEEP_HOURS * HOUR_MS;
     for (const k of m.hourly.keys()) {
       if (k < cutoff) m.hourly.delete(k);

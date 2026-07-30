@@ -1,10 +1,3 @@
-/**
- * Level role reward repo.
- *
- * One row = "at level N in this guild, assign role R".
- * Admin manages via g!levelrole add/remove/list.
- * LevelService reads on level-up to figure out which roles to grant.
- */
 
 import { db } from '../database.js';
 
@@ -19,7 +12,7 @@ const stmts = {
   list: db.prepare<[string], LevelRewardRow>(
     'SELECT * FROM level_role_rewards WHERE guild_id = ? ORDER BY level ASC',
   ),
-  // All rewards at or below a given level — for catching up if user jumps multiple levels.
+
   forLevelUpTo: db.prepare<[string, number], LevelRewardRow>(
     'SELECT * FROM level_role_rewards WHERE guild_id = ? AND level <= ? ORDER BY level ASC',
   ),

@@ -28,7 +28,6 @@ const command: Command = {
       return;
     }
 
-    // Verify the target is in this guild before mutating their row
     try {
       await ctx.guild.members.fetch(targetId);
     } catch {

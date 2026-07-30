@@ -1,9 +1,3 @@
-/**
- * Health helpers used by g!ping for real diagnostics (item #12).
- *
- * Reports WebSocket latency, DB roundtrip, memory, uptime — so you can
- * tell at a glance: "is the bot lagging or is Discord lagging?"
- */
 
 import type { Client } from 'discord.js';
 import { db } from '../db/database.js';
@@ -21,7 +15,7 @@ export function snapshot(client: Client<true>): HealthSnapshot {
   const wsPingMs = Math.round(client.ws.ping);
 
   const t = Date.now();
-  // Trivial query — measures DB roundtrip including JS overhead
+
   db.prepare('SELECT 1 as ok').get();
   const dbQueryMs = Date.now() - t;
 
@@ -38,7 +32,6 @@ export function snapshot(client: Client<true>): HealthSnapshot {
   };
 }
 
-/** Format uptime as "Xd Yh Zm". */
 export function formatUptime(ms: number): string {
   const sec = Math.floor(ms / 1000);
   const d = Math.floor(sec / 86400);

@@ -1,17 +1,3 @@
-/**
- * DB-backed scheduler. Lets us persist "do X at time Y" across restarts.
- *
- * Why: in-process `setTimeout` dies when the bot restarts. If we ever add
- * time-based void release (e.g. "voided for 10 minutes"), we MUST persist
- * the deadline or restarts leave users jailed forever.
- *
- * Pattern:
- *   1. To schedule: insert a row with task_type, payload (JSON), run_at
- *   2. On startup: sweep all due rows, execute, delete
- *   3. Periodic timer (every 30s) sweeps newly-due rows
- *
- * Wired up in src/services/SchedulerService.ts.
- */
 
 import { db } from '../database.js';
 

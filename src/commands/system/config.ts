@@ -1,12 +1,3 @@
-/**
- * g!config — read-only view of current bot configuration (item #7).
- *
- * Staff often need to know "what mod-log channel is set?" or "did setup
- * jail actually save?" without SSHing into the VPS. This shows it inline.
- *
- * Admin-gated even though it's read-only — internal IDs aren't secret,
- * but they're not for general visibility either.
- */
 
 import { type Command, PermissionLevel } from '../../framework/Command.js';
 import { cosmicEmbed } from '../../utils/embed.js';

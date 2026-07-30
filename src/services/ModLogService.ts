@@ -1,18 +1,3 @@
-/**
- * Mod-log service (item #8).
- *
- * Every staff action that mutates server state — void, free, escape,
- * future warns/mutes/bans — calls `modLog()` to post a record to the
- * configured mod-log channel.
- *
- * Database persistence happens at the action site (VoidHistoryRepo etc).
- * This file is the *Discord-facing* part: the embed people scroll
- * through in #mod-log.
- *
- * Failure modes are explicit:
- *   - Channel not configured: log a warn (once per startup) and skip
- *   - Channel deleted / no perms: log error, don't throw
- */
 
 import { type Client, type Guild, EmbedBuilder, ChannelType } from 'discord.js';
 import { config } from '../config/config.js';
@@ -28,7 +13,7 @@ const colorMap: Record<ModLogColor, number> = {
 };
 
 export interface ModLogEntry {
-  action: string;             // 'void', 'free', 'escape', etc.
+  action: string;
   color: ModLogColor;
   targetUserId?: string;
   actorUserId?: string;
@@ -36,7 +21,6 @@ export interface ModLogEntry {
   fields?: Array<{ name: string; value: string }>;
 }
 
-// Track whether we've already warned about a missing channel — avoid log spam.
 let warnedNoChannel = false;
 
 export async function modLog(

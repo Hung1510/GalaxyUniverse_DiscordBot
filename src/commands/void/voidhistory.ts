@@ -1,9 +1,3 @@
-/**
- * g!voidhistory @user — view past void sentences for a user.
- *
- * Audit trail viewer. Reads from void_history (populated on every release).
- * Mod-gated because seeing how often someone gets jailed is sensitive.
- */
 
 import { type Command, PermissionLevel } from '../../framework/Command.js';
 import { cosmicEmbed, errorEmbed } from '../../utils/embed.js';

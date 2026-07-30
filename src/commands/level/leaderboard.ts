@@ -1,15 +1,3 @@
-/**
- * g!leaderboard [page] — top users by XP.
- *
- * Pagination: 10 per page. Page 1 by default. We resolve display names
- * via members.cache first, then fall back to fetch — fetching 10 users
- * isn't free but it's once-per-command, not per-message.
- *
- * Why no reaction-based pager: would require client.on('messageReactionAdd')
- * + reaction-collector state. The right answer in v14 is button components,
- * which we'll layer in once we adopt interactions broadly. For now: type
- * `g!lb 2` to navigate.
- */
 
 import { type Command, PermissionLevel } from '../../framework/Command.js';
 import { cosmicEmbed, errorEmbed } from '../../utils/embed.js';
@@ -29,7 +17,7 @@ const command: Command = {
   permission: PermissionLevel.USER,
 
   async execute(ctx) {
-    // Parse page number defensively
+
     let page = 1;
     if (ctx.args[0]) {
       const parsed = parseInt(ctx.args[0], 10);
@@ -56,7 +44,7 @@ const command: Command = {
 
     const lines: string[] = [];
     for (const r of rows) {
-      // Resolve display name: cache first (free), then fetch (cheap)
+
       let displayName = `<@${r.user_id}>`;
       const cached = ctx.guild.members.cache.get(r.user_id);
       if (cached) {
@@ -66,7 +54,7 @@ const command: Command = {
           const fetched = await ctx.guild.members.fetch(r.user_id);
           displayName = fetched.displayName;
         } catch {
-          // User may have left the server — leave as mention; renders as "@invalid-user"
+
           displayName = `*(đã rời server)*`;
         }
       }

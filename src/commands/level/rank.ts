@@ -1,10 +1,3 @@
-/**
- * g!rank [@user] — show level/XP info.
- *
- * Includes a textual progress bar because we want it readable on mobile
- * (image rank cards are nice but require canvas, which is a heavy dep
- * we're not pulling in for v0.4).
- */
 
 import { type Command, PermissionLevel } from '../../framework/Command.js';
 import { cosmicEmbed, errorEmbed } from '../../utils/embed.js';
@@ -32,8 +25,6 @@ const command: Command = {
   async execute(ctx) {
     const targetId = ctx.message.mentions.users.first()?.id ?? ctx.args[0] ?? ctx.member.id;
 
-    // Validate the target actually exists in the guild — otherwise people
-    // can g!rank random snowflakes and get back empty rows.
     let member;
     try {
       member = await ctx.guild.members.fetch(targetId);

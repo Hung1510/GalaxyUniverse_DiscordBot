@@ -1,12 +1,3 @@
-/**
- * Void/Prison service.
- *
- * v0.3 changes:
- *   - Release writes to VoidHistoryRepo (audit trail)
- *   - All actions emit ModLogService entries
- *   - jail() includes hardening: refuses to jail bots, owner, or anyone
- *     above the actor's role
- */
 
 import {
   type Client,
@@ -107,7 +98,7 @@ export const VoidService = {
     reason: string | null,
     client: Client<true>,
   ): Promise<JailResult> {
-    // Hardening (item #11 abuse vector tests)
+
     if (target.user.bot) return { ok: false, reason: 'is_bot' };
     if (target.id === actor.id) return { ok: false, reason: 'is_self' };
     if (target.roles.highest.position >= actor.roles.highest.position && actor.id !== target.guild.ownerId) {
@@ -153,13 +144,12 @@ export const VoidService = {
 
     const settings = GuildSettingsRepo.get(member.guild.id);
     if (settings?.jail_role_id) {
-      // Idempotent — if role was already removed manually, that's fine.
+
       await member.roles.remove(settings.jail_role_id, `Released (${releaseType})`).catch((err) => {
         logger.warn(`Could not remove jail role from ${member.id}:`, err);
       });
     }
 
-    // Write history BEFORE deleting active sentence (so we have all the info).
     VoidHistoryRepo.record({
       user_id: member.id,
       guild_id: member.guild.id,
@@ -189,15 +179,10 @@ export const VoidService = {
     return true;
   },
 
-  /**
-   * Called from messageCreate when a jailed user types in the jail channel.
-   * v0.3: removed the "wrong keyword" branch — keyword check is done at
-   * call site to keep this service Discord-event-agnostic.
-   */
-  async recordAttempt(member: GuildMember, client: Client<true>): Promise<AttemptResult> {
+    async recordAttempt(member: GuildMember, client: Client<true>): Promise<AttemptResult> {
     const sentence = VoidRepo.getSentence(member.id);
     if (!sentence) {
-      // Shouldn't happen if caller checked, but be defensive.
+
       return { type: 'escaped' };
     }
 

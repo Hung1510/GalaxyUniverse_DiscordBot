@@ -1,9 +1,3 @@
-/**
- * g!stats — command usage metrics (item #17).
- *
- * Owner-only because it can expose usage patterns of moderation tools
- * that are not for general visibility.
- */
 
 import { type Command, PermissionLevel } from '../../framework/Command.js';
 import { cosmicEmbed } from '../../utils/embed.js';

@@ -1,23 +1,4 @@
 #!/usr/bin/env node
-/**
- * Database backup script (item #3).
- *
- * Wire up via cron on Onidel:
- *   0 3 * * * cd /home/galaxy/bot && /usr/bin/node scripts/backup.js
- *   (runs nightly at 3 AM local; check pm2 timezone)
- *
- * What it does:
- *   1. Reads DATABASE_PATH from .env
- *   2. Uses SQLite's online backup API (safe to run while bot is live)
- *   3. Writes to data/backups/galaxy-YYYY-MM-DD-HHmmss.db
- *   4. Prunes backups older than 7 days
- *
- * Why the online backup API and not `cp`: with WAL mode, a raw `cp`
- * during a write can produce a torn copy. The backup() API takes a
- * consistent snapshot even under concurrent writes.
- *
- * Run manually anytime: `npm run backup`
- */
 
 import { config as loadDotenv } from 'dotenv';
 import Database from 'better-sqlite3';
@@ -51,7 +32,6 @@ async function main() {
     db.close();
   }
 
-  // Verify the backup file is readable
   const verify = new Database(outPath, { readonly: true });
   try {
     const row = verify.prepare('SELECT COUNT(*) AS n FROM _migrations').get();
@@ -60,7 +40,6 @@ async function main() {
     verify.close();
   }
 
-  // Prune old backups
   const cutoff = Date.now() - RETENTION_DAYS * 86400 * 1000;
   let pruned = 0;
   for (const file of readdirSync(BACKUP_DIR)) {
