@@ -17,18 +17,18 @@ const command: Command = {
     const totalFail = snap.reduce((a, x) => a + x.failed, 0);
 
     const lines = snap.slice(0, 15).map((s) => {
-      const failNote = s.failed > 0 ? ` (❌${s.failed})` : '';
-      return `\`${s.name}\` — ${s.total} (24h: ${s.last24h}, avg ${s.avgMs}ms${failNote})`;
+  const failNote = s.failed > 0 ? ` (❌${s.failed})` : '';
+  return `\`${s.name}\` - ${s.total} (24h: ${s.last24h}, avg ${s.avgMs}ms${failNote})`;
     });
 
     const embed = cosmicEmbed()
-      .setTitle('📊 Bot stats')
-      .setDescription(lines.length ? lines.join('\n') : '*Chưa có lệnh nào chạy.*')
-      .addFields(
-        { name: 'Uptime', value: formatUptime(metrics.uptimeMs()), inline: true },
-        { name: 'Total commands', value: String(totalAll), inline: true },
-        { name: 'Failures', value: String(totalFail), inline: true },
-      );
+  .setTitle('📊 Bot stats')
+  .setDescription(lines.length ? lines.join('\n') : '*Chưa có lệnh nào chạy.*')
+  .addFields(
+    { name: 'Uptime', value: formatUptime(metrics.uptimeMs()), inline: true },
+    { name: 'Total commands', value: String(totalAll), inline: true },
+    { name: 'Failures', value: String(totalFail), inline: true },
+  );
 
     await ctx.message.reply({ embeds: [embed] });
   },

@@ -12,8 +12,8 @@ const envSchema = z.object({
     .string()
     .min(50, 'DISCORD_TOKEN looks too short (need >=50 chars)')
     .refine(
-      (t) => t.split('.').length === 3,
-      'DISCORD_TOKEN should have 3 dot-separated parts (xxx.yyy.zzz)',
+  (t) => t.split('.').length === 3,
+  'DISCORD_TOKEN should have 3 dot-separated parts (xxx.yyy.zzz)',
     ),
   DATABASE_PATH: z.string().default('data/galaxy.db'),
   NODE_ENV: z.enum(['development', 'production']).default('development'),
@@ -41,7 +41,7 @@ function parseEnv(): Env {
   if (!result.success) {
     logger.error('Invalid .env configuration:');
     for (const issue of result.error.issues) {
-      logger.error(`  ${issue.path.join('.')}: ${issue.message}`);
+  logger.error(`  ${issue.path.join('.')}: ${issue.message}`);
     }
     logger.error('Fix your .env file and restart. See .env.example for reference.');
     process.exit(1);
@@ -69,7 +69,7 @@ function parseConfig(): Config {
   if (!result.success) {
     logger.error('Invalid config.json:');
     for (const issue of result.error.issues) {
-      logger.error(`  ${issue.path.join('.')}: ${issue.message}`);
+  logger.error(`  ${issue.path.join('.')}: ${issue.message}`);
     }
     process.exit(1);
   }

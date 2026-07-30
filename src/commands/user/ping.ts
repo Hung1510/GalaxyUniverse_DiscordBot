@@ -12,14 +12,14 @@ const command: Command = {
   async execute(ctx) {
     const s = snapshot(ctx.client);
     const embed = cosmicEmbed()
-      .setTitle('🛰️ Pong!')
-      .addFields(
-        { name: 'WebSocket', value: `${s.wsPingMs}ms`, inline: true },
-        { name: 'Database', value: `${s.dbQueryMs}ms`, inline: true },
-        { name: 'Memory', value: `${s.memMb} MB`, inline: true },
-        { name: 'Uptime', value: formatUptime(s.uptimeMs), inline: true },
-        { name: 'Commands run', value: String(s.totalCommands), inline: true },
-      );
+  .setTitle('🛰️ Pong!')
+  .addFields(
+    { name: 'WebSocket', value: `${s.wsPingMs}ms`, inline: true },
+    { name: 'Database', value: `${s.dbQueryMs}ms`, inline: true },
+    { name: 'Memory', value: `${s.memMb} MB`, inline: true },
+    { name: 'Uptime', value: formatUptime(s.uptimeMs), inline: true },
+    { name: 'Commands run', value: String(s.totalCommands), inline: true },
+  );
     await ctx.message.reply({ embeds: [embed] });
   },
 };

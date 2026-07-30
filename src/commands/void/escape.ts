@@ -13,8 +13,8 @@ const command: Command = {
 
   async execute(ctx) {
     if (!VoidRepo.getSentence(ctx.member.id)) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('void.not_jailed_self'))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('void.not_jailed_self'))] });
+  return;
     }
     await ctx.message.reply(t('void.escape_hint'));
   },

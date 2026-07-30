@@ -20,8 +20,8 @@ logger.info(`Database opened: ${dbPath}`);
 function runMigrations(): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
-      filename   TEXT PRIMARY KEY,
-      applied_at INTEGER NOT NULL
+  filename   TEXT PRIMARY KEY,
+  applied_at INTEGER NOT NULL
     )
   `);
 
@@ -42,8 +42,8 @@ function runMigrations(): void {
     const sql = readFileSync(resolve(migrationsDir, file), 'utf8');
 
     const tx = db.transaction(() => {
-      db.exec(sql);
-      recordStmt.run(file, Date.now());
+  db.exec(sql);
+  recordStmt.run(file, Date.now());
     });
     tx();
     logger.info(`Migration applied: ${basename(file)}`);

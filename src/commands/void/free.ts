@@ -15,19 +15,19 @@ const command: Command = {
   async execute(ctx) {
     const targetId = ctx.message.mentions.users.first()?.id ?? ctx.args[0];
     if (!targetId) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!free @user' }))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!free @user' }))] });
+  return;
     }
     let target;
     try {
-      target = await ctx.guild.members.fetch(targetId);
+  target = await ctx.guild.members.fetch(targetId);
     } catch {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.user_not_found'))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('common.user_not_found'))] });
+  return;
     }
     if (!VoidRepo.getSentence(target.id)) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('void.not_jailed'))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('void.not_jailed'))] });
+  return;
     }
     await VoidService.release(target, 'free', ctx.member, ctx.client);
     await ctx.message.reply({ embeds: [successEmbed(t('void.freed', { target: `<@${target.id}>` }))] });

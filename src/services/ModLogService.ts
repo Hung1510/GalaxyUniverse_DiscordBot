@@ -30,8 +30,8 @@ export async function modLog(
 ): Promise<void> {
   if (!config.modLogChannelId) {
     if (!warnedNoChannel) {
-      logger.warn('modLogChannelId not configured — mod-log entries will only go to file logs.');
-      warnedNoChannel = true;
+  logger.warn('modLogChannelId not configured - mod-log entries will only go to file logs.');
+  warnedNoChannel = true;
     }
     logger.info(`[modlog/${entry.action}] target=${entry.targetUserId ?? '?'} actor=${entry.actorUserId ?? '?'} reason=${entry.reason ?? ''}`);
     return;
@@ -40,30 +40,30 @@ export async function modLog(
   try {
     const channel = await client.channels.fetch(config.modLogChannelId);
     if (!channel || channel.type !== ChannelType.GuildText) {
-      logger.warn(`Mod-log channel ${config.modLogChannelId} not a text channel or not accessible.`);
-      return;
+  logger.warn(`Mod-log channel ${config.modLogChannelId} not a text channel or not accessible.`);
+  return;
     }
     if (channel.guildId !== guild.id) {
-      logger.warn(`Mod-log channel is in a different guild — skipping post.`);
-      return;
+  logger.warn(`Mod-log channel is in a different guild - skipping post.`);
+  return;
     }
 
     const embed = new EmbedBuilder()
-      .setColor(colorMap[entry.color])
-      .setTitle(`Mod-log: ${entry.action}`)
-      .setTimestamp();
+  .setColor(colorMap[entry.color])
+  .setTitle(`Mod-log: ${entry.action}`)
+  .setTimestamp();
 
     if (entry.targetUserId) {
-      embed.addFields({ name: 'Target', value: `<@${entry.targetUserId}> (\`${entry.targetUserId}\`)`, inline: true });
+  embed.addFields({ name: 'Target', value: `<@${entry.targetUserId}> (\`${entry.targetUserId}\`)`, inline: true });
     }
     if (entry.actorUserId) {
-      embed.addFields({ name: 'Actor', value: `<@${entry.actorUserId}> (\`${entry.actorUserId}\`)`, inline: true });
+  embed.addFields({ name: 'Actor', value: `<@${entry.actorUserId}> (\`${entry.actorUserId}\`)`, inline: true });
     }
     if (entry.reason) {
-      embed.addFields({ name: 'Reason', value: entry.reason });
+  embed.addFields({ name: 'Reason', value: entry.reason });
     }
     for (const f of entry.fields ?? []) {
-      embed.addFields(f);
+  embed.addFields(f);
     }
 
     await channel.send({ embeds: [embed] });

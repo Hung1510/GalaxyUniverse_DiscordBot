@@ -9,9 +9,9 @@
 
 Cần cài sẵn trên máy:
 
-- **Node.js v20 hoặc mới hơn** — kiểm tra: mở terminal gõ `node --version`, phải hiện `v20.x.x` trở lên. Chưa có thì tải ở https://nodejs.org (chọn LTS).
-- **Git** — kiểm tra: `git --version`. Chưa có thì https://git-scm.com.
-- **Một code editor** — VS Code khuyên dùng (https://code.visualstudio.com).
+- **Node.js v20 hoặc mới hơn** - kiểm tra: mở terminal gõ `node --version`, phải hiện `v20.x.x` trở lên. Chưa có thì tải ở https://nodejs.org (chọn LTS).
+- **Git** - kiểm tra: `git --version`. Chưa có thì https://git-scm.com.
+- **Một code editor** - VS Code khuyên dùng (https://code.visualstudio.com).
 
 Cần có:
 
@@ -22,7 +22,7 @@ Cần có:
 
 ## Phần 1: Tạo bot trên Discord Developer Portal
 
-### Bước 1.1 — Mở Developer Portal
+### Bước 1.1 - Mở Developer Portal
 
 1. Vào https://discord.com/developers/applications
 2. Login bằng tài khoản Discord
@@ -32,48 +32,48 @@ Cần có:
 
 Vào trang quản lý app.
 
-### Bước 1.2 — Tạo Bot user
+### Bước 1.2 - Tạo Bot user
 
 1. Sidebar trái, bấm **"Bot"**
 2. Trang Bot có sẵn rồi (Discord tự tạo bot user khi tạo application)
-3. **Đặt avatar và tên** ở mục "Username" — nên đặt giống tên app
+3. **Đặt avatar và tên** ở mục "Username" - nên đặt giống tên app
 
-### Bước 1.3 — Lấy Bot Token
+### Bước 1.3 - Lấy Bot Token
 
 1. Trong mục **"TOKEN"**, bấm **"Reset Token"**
-2. Confirm. Discord hiện token một lần duy nhất — dài khoảng 70 ký tự.
+2. Confirm. Discord hiện token một lần duy nhất - dài khoảng 70 ký tự.
 3. **Copy ngay**, lưu tạm vào notepad.
 
 > Nếu lỡ tay đóng tab → quay lại bấm Reset Token lần nữa (token cũ sẽ vô hiệu).
 
-### Bước 1.4 — Bật Privileged Intents
+### Bước 1.4 - Bật Privileged Intents
 
-Discord chia event thành "intent" — bot phải khai báo trước cái nào nó nghe. 2 trong số đó là **privileged**, phải tự bật trong Developer Portal:
+Discord chia event thành "intent" - bot phải khai báo trước cái nào nó nghe. 2 trong số đó là **privileged**, phải tự bật trong Developer Portal:
 
 Cuộn xuống mục **"Privileged Gateway Intents"** trong trang Bot:
 
-- **MESSAGE CONTENT INTENT** — bật. *Không bật thì `message.content` rỗng, bot không đọc được lệnh nào hết.*
-- **SERVER MEMBERS INTENT** — bật. *Cần để resolve mention, fetch member info, làm moderation sau này.*
-- PRESENCE INTENT — không cần bật.
+- **MESSAGE CONTENT INTENT** - bật. *Không bật thì `message.content` rỗng, bot không đọc được lệnh nào hết.*
+- **SERVER MEMBERS INTENT** - bật. *Cần để resolve mention, fetch member info, làm moderation sau này.*
+- PRESENCE INTENT - không cần bật.
 
 Bấm **Save Changes** ở dưới.
 
-### Bước 1.5 — Tạo Invite Link
+### Bước 1.5 - Tạo Invite Link
 
 1. Sidebar, bấm **"OAuth2"**
 2. Trong **"OAuth2 URL Generator"**:
    - **SCOPES**: tick `bot`
    - **BOT PERMISSIONS**: tick các quyền sau (cần đủ để bot làm việc):
-     - Send Messages, Embed Links, Read Message History (cơ bản)
-     - Manage Roles, Manage Channels (cho `g!setup jail`)
-     - View Channels
+ - Send Messages, Embed Links, Read Message History (cơ bản)
+ - Manage Roles, Manage Channels (cho `g!setup jail`)
+ - View Channels
 3. Cuộn xuống cuối, copy **Generated URL**. Dùng ở Phần 3.
 
 ---
 
 ## Phần 2: Setup code trên máy local
 
-### Bước 2.1 — Lấy code
+### Bước 2.1 - Lấy code
 
 Giải nén code ra một folder. Hoặc nếu đã có repo git:
 
@@ -84,7 +84,7 @@ cd ...
 
 Mở folder bằng VS Code: `code .`
 
-### Bước 2.2 — Cài dependencies
+### Bước 2.2 - Cài dependencies
 
 Mở terminal trong VS Code (`` Ctrl+` `` hoặc Terminal → New Terminal):
 
@@ -93,13 +93,13 @@ npm install
 ```
 
 Đợi 1-2 phút. Tải về:
-- `discord.js` — thư viện chính nói chuyện với Discord
-- `better-sqlite3` — driver SQLite (cần build native — xem "Troubleshooting" nếu lỗi)
-- `dotenv` — đọc `.env`
-- `zod` — validate `.env` và `config.json` lúc start
-- `tsx`, `typescript` — chạy/compile TypeScript
+- `discord.js` - thư viện chính nói chuyện với Discord
+- `better-sqlite3` - driver SQLite (cần build native - xem "Troubleshooting" nếu lỗi)
+- `dotenv` - đọc `.env`
+- `zod` - validate `.env` và `config.json` lúc start
+- `tsx`, `typescript` - chạy/compile TypeScript
 
-### Bước 2.3 — Tạo file `.env`
+### Bước 2.3 - Tạo file `.env`
 
 Trong folder gốc, copy `.env.example` thành `.env`:
 
@@ -119,11 +119,11 @@ DATABASE_PATH=./data/galaxy.db
 NODE_ENV=development
 ```
 
-> File `.env` đã trong `.gitignore` — KHÔNG bị push lên GitHub.
+> File `.env` đã trong `.gitignore` - KHÔNG bị push lên GitHub.
 
-> Lưu ý: từ v0.3, `PREFIX` không còn ở `.env` — đã chuyển sang `config.json`.
+> Lưu ý: từ v0.3, `PREFIX` không còn ở `.env` - đã chuyển sang `config.json`.
 
-### Bước 2.4 — Tạo file `config.json`
+### Bước 2.4 - Tạo file `config.json`
 
 ```bash
 # Linux/Mac:
@@ -135,7 +135,7 @@ copy config.example.json config.json
 
 > Lưu ý: `config.json` giờ ở **root folder**, không phải `src/config/` nữa.
 
-Mở `config.json`, có thể để rỗng `ownerIds`, `modRoleIds`, `adminRoleIds`, `modLogChannelId` lúc này — `g!ping`, `g!help`, `g!userinfo` chạy được không cần. **Nhưng nên điền `ownerIds` ngay** (Discord user ID của bạn) để sau dùng được `g!stats`.
+Mở `config.json`, có thể để rỗng `ownerIds`, `modRoleIds`, `adminRoleIds`, `modLogChannelId` lúc này - `g!ping`, `g!help`, `g!userinfo` chạy được không cần. **Nhưng nên điền `ownerIds` ngay** (Discord user ID của bạn) để sau dùng được `g!stats`.
 
 Cách lấy Discord user ID: bật Developer Mode (Settings → Advanced → Developer Mode), chuột phải avatar của mình → Copy User ID.
 
@@ -149,13 +149,13 @@ Cách lấy Discord user ID: bật Developer Mode (Settings → Advanced → Dev
 }
 ```
 
-### Bước 2.5 — Chạy bot lần đầu
+### Bước 2.5 - Chạy bot lần đầu
 
 ```bash
 npm run dev
 ```
 
-Lệnh này dùng `tsx watch` — chạy TypeScript trực tiếp **và** tự reload khi sửa file.
+Lệnh này dùng `tsx watch` - chạy TypeScript trực tiếp **và** tự reload khi sửa file.
 
 **Kết quả mong đợi:**
 
@@ -174,9 +174,9 @@ Lệnh này dùng `tsx watch` — chạy TypeScript trực tiếp **và** tự r
 
 > "Watching 0 guild(s)" là vì chưa mời bot. Sang phần 3.
 
-Để **dừng bot**: `Ctrl+C` trong terminal. Bot sẽ shutdown gracefully (close DB, destroy client) — sẽ thấy log:
+Để **dừng bot**: `Ctrl+C` trong terminal. Bot sẽ shutdown gracefully (close DB, destroy client) - sẽ thấy log:
 ```
-Received SIGINT — shutting down...
+Received SIGINT - shutting down...
 Discord client destroyed.
 Database closed cleanly.
 ```
@@ -185,7 +185,7 @@ Database closed cleanly.
 
 ## Phần 3: Mời bot vào server và test
 
-### Bước 3.1 — Mời bot
+### Bước 3.1 - Mời bot
 
 1. Mở link OAuth2 ở Bước 1.5 trong browser
 2. Chọn server muốn mời bot
@@ -201,7 +201,7 @@ Permission audit OK for guild "Server Name" (123...)
 
 Nếu báo issue, fix theo log (vd thiếu Manage Roles → đổi permission của role bot trong server).
 
-### Bước 3.2 — Test các lệnh cơ bản
+### Bước 3.2 - Test các lệnh cơ bản
 
 Trong bất kỳ channel nào bot có quyền nhìn và gửi tin:
 
@@ -214,15 +214,15 @@ Trong bất kỳ channel nào bot có quyền nhìn và gửi tin:
 
 **`g!help`** → bot trả về embed liệt kê các nhóm lệnh hiện có (chỉ hiện lệnh bạn có quyền dùng).
 
-**`g!userinfo`** → embed thông tin về bạn (level, XP, balance hiện đang 0 — bình thường, hệ thống economy/level chưa build).
+**`g!userinfo`** → embed thông tin về bạn (level, XP, balance hiện đang 0 - bình thường, hệ thống economy/level chưa build).
 
 **`g!userinfo @AiĐó`** → embed thông tin user mention.
 
-**`g!config`** (admin-only — bạn phải là owner trong `config.json` hoặc có role admin) → xem cấu hình hiện tại của bot trong server này.
+**`g!config`** (admin-only - bạn phải là owner trong `config.json` hoặc có role admin) → xem cấu hình hiện tại của bot trong server này.
 
 Các lệnh chạy → **Phần 1+2 hoàn tất**, sẵn sàng test Void.
 
-### Bước 3.3 — Test Void (tuỳ chọn)
+### Bước 3.3 - Test Void (tuỳ chọn)
 
 Cần ít nhất:
 - Bot có Manage Roles + Manage Channels
@@ -230,7 +230,7 @@ Cần ít nhất:
 - Một alt account đã join server để test (xem hướng dẫn tạo alt ở phần đầu chat)
 
 ```
-g!setup jail        # tạo role Void + channel #the-void, sync permission tất cả channel
+g!setup jail    # tạo role Void + channel #the-void, sync permission tất cả channel
 g!void @alt 3 test  # nhốt alt, 3 lần glausan
 ```
 
@@ -239,7 +239,7 @@ Switch sang alt → vào #the-void → gõ `glausan` 3 lần (đợi 30s giữa 
 ```
 g!voidstatus @alt   # confirm đã thả
 g!voidhistory @alt  # thấy 1 record
-g!voidlist          # rỗng
+g!voidlist  # rỗng
 ```
 
 ---
@@ -257,7 +257,7 @@ g!voidlist          # rỗng
 3. **Bot không có quyền View Channel hoặc Send Messages trong channel đó.** → Check permission của role bot.
 4. **Token sai/cũ.** → Reset token, paste vào `.env`, restart.
 
-### Lỗi `npm install` — `better-sqlite3` build fail
+### Lỗi `npm install` - `better-sqlite3` build fail
 
 **Triệu chứng:** error có chữ `node-gyp`, `Python`, hoặc `MSBuild`.
 
@@ -308,7 +308,7 @@ Sau đó `npm install` lại.
 
 **Fix:** Server Settings → Roles → role bot → bật "Embed Links". Hoặc check channel-specific permissions.
 
-Tip: chạy `g!stats` (owner-only) sẽ thấy command failed count tăng lên — verify được là lỗi internal chứ không phải bot ignore.
+Tip: chạy `g!stats` (owner-only) sẽ thấy command failed count tăng lên - verify được là lỗi internal chứ không phải bot ignore.
 
 ### Bot online nhưng `g!setup jail` không tạo role/channel
 
@@ -322,12 +322,12 @@ Tip: chạy `g!stats` (owner-only) sẽ thấy command failed count tăng lên �
 ```
 [WARN] Permission audit found 2 issue(s) in guild "...":
   - Missing perm: Manage Roles
-  - Jail role 123... (in DB) no longer exists — re-run g!setup jail
+  - Jail role 123... (in DB) no longer exists - re-run g!setup jail
 ```
 
 **Fix theo từng issue:**
 - Thiếu perm → đổi role bot trong server settings
-- Jail role/channel bị xóa → chạy lại `g!setup jail` (nhưng phải xóa entry trong DB trước, hoặc dùng admin SQL — TBD, sẽ fix sau)
+- Jail role/channel bị xóa → chạy lại `g!setup jail` (nhưng phải xóa entry trong DB trước, hoặc dùng admin SQL - TBD, sẽ fix sau)
 
 ### Database lỗi: `SqliteError: database is locked`
 
@@ -337,7 +337,7 @@ Tip: chạy `g!stats` (owner-only) sẽ thấy command failed count tăng lên �
 
 ---
 
-## Phần 4: Deploy production — chọn host
+## Phần 4: Deploy production - chọn host
 
 Khi feature ổn muốn bot chạy 24/7 không cần mở máy, có **3 option**. Đọc so sánh trước, rồi follow phần tương ứng.
 
@@ -358,7 +358,7 @@ Hệ điều hành recommend: **Ubuntu 24.04 LTS** (phổ biến, document đầ
 
 ### 4A. Deploy lên Onidel VPS
 
-#### Bước 4A.1 — Tạo account và VPS
+#### Bước 4A.1 - Tạo account và VPS
 
 1. Vào https://onidel.com, đăng ký
 2. Confirm email
@@ -366,15 +366,15 @@ Hệ điều hành recommend: **Ubuntu 24.04 LTS** (phổ biến, document đầ
 4. Chọn:
    - **Location:** Singapore (gần VN nhất, latency tốt nhất)
    - **OS:** Ubuntu 24.04 LTS
-   - **Plan:** plan rẻ nhất (1 vCPU, 1GB RAM, 20GB SSD) — quá đủ cho bot 350-2000 user
+   - **Plan:** plan rẻ nhất (1 vCPU, 1GB RAM, 20GB SSD) - quá đủ cho bot 350-2000 user
    - **Billing:** monthly (sau ổn rồi đổi annual để tiết kiệm 15-20%)
-5. Đặt **root password** (lưu vào password manager — sẽ dùng đăng nhập)
+5. Đặt **root password** (lưu vào password manager - sẽ dùng đăng nhập)
 6. Pay (PayPal hoặc thẻ; Onidel còn nhận VietQR)
-7. Đợi ~60 giây — VPS được provision
+7. Đợi ~60 giây - VPS được provision
 
 Khi xong, dashboard hiện **IP address** của VPS (vd `103.213.xxx.xxx`). Lưu lại.
 
-#### Bước 4A.2 — SSH vào VPS lần đầu
+#### Bước 4A.2 - SSH vào VPS lần đầu
 
 Mở terminal trên máy local:
 
@@ -385,9 +385,9 @@ ssh root@103.213.xxx.xxx
 - Lần đầu sẽ hỏi confirm fingerprint → gõ `yes`
 - Nhập password root đã đặt ở bước trước
 
-#### Bước 4A.3 — Update hệ thống và tạo user thường
+#### Bước 4A.3 - Update hệ thống và tạo user thường
 
-**Đừng chạy bot bằng user `root`** — nguyên tắc bảo mật cơ bản. Tạo user thường:
+**Đừng chạy bot bằng user `root`** - nguyên tắc bảo mật cơ bản. Tạo user thường:
 
 ```bash
 # Update package list
@@ -405,7 +405,7 @@ su - galaxy
 
 Từ giờ làm việc dưới user `galaxy`. Khi cần root quyền dùng `sudo`.
 
-#### Bước 4A.4 — Cài Node.js 20
+#### Bước 4A.4 - Cài Node.js 20
 
 ```bash
 # Cài curl nếu chưa có
@@ -419,16 +419,16 @@ sudo apt install -y nodejs
 
 # Verify
 node --version    # phải ra v20.x.x
-npm --version     # phải ra 10.x trở lên
+npm --version # phải ra 10.x trở lên
 ```
 
-#### Bước 4A.5 — Cài build tools (cho `better-sqlite3`)
+#### Bước 4A.5 - Cài build tools (cho `better-sqlite3`)
 
 ```bash
 sudo apt install -y build-essential python3 git
 ```
 
-#### Bước 4A.6 — Lấy code lên VPS
+#### Bước 4A.6 - Lấy code lên VPS
 
 **Cách 1 (khuyên dùng): clone từ GitHub**
 
@@ -460,7 +460,7 @@ tar -xzf ~/galaxy.tar.gz
 rm ~/galaxy.tar.gz
 ```
 
-#### Bước 4A.7 — Cài dependencies và config
+#### Bước 4A.7 - Cài dependencies và config
 
 ```bash
 cd ~/galaxy-universe
@@ -492,9 +492,9 @@ cp config.example.json config.json
 nano config.json
 ```
 
-Điền role/owner/channel ID (đã có sẵn lúc này — owner đã gửi). Save.
+Điền role/owner/channel ID (đã có sẵn lúc này - owner đã gửi). Save.
 
-#### Bước 4A.8 — Test chạy thử
+#### Bước 4A.8 - Test chạy thử
 
 ```bash
 npm start
@@ -504,9 +504,9 @@ Phải thấy log đầy đủ migrations + "Logged in as..." + "Permission audi
 
 Nếu lỗi: xem log, fix, thử lại.
 
-#### Bước 4A.9 — Cài pm2 để bot tự restart 24/7
+#### Bước 4A.9 - Cài pm2 để bot tự restart 24/7
 
-`npm start` chạy ở foreground — đóng SSH là bot tắt. Cần **pm2** (process manager):
+`npm start` chạy ở foreground - đóng SSH là bot tắt. Cần **pm2** (process manager):
 
 ```bash
 sudo npm install -g pm2
@@ -522,7 +522,7 @@ pm2 start dist/index.js --name galaxy
 Verify:
 
 ```bash
-pm2 status      # phải thấy galaxy ở trạng thái 'online'
+pm2 status  # phải thấy galaxy ở trạng thái 'online'
 pm2 logs galaxy # xem live logs (Ctrl+C để thoát log, không tắt bot)
 ```
 
@@ -531,10 +531,10 @@ Cấu hình pm2 tự khởi động khi VPS reboot:
 ```bash
 pm2 save
 pm2 startup
-# Lệnh này in ra một dòng `sudo env PATH=...` — copy paste, chạy lại
+# Lệnh này in ra một dòng `sudo env PATH=...` - copy paste, chạy lại
 ```
 
-#### Bước 4A.10 — Cài pm2-logrotate
+#### Bước 4A.10 - Cài pm2-logrotate
 
 pm2 console log mặc định grow vô hạn → đầy disk lúc nào không hay. Cài log rotate:
 
@@ -547,9 +547,9 @@ pm2 set pm2-logrotate:compress true
 
 Log cũ sẽ tự nén và xóa sau 14 ngày.
 
-> Bot tự ghi log ra `data/logs/bot.log` (`utils/logger.ts`) — riêng biệt với pm2 logs. Cả hai đều rotate được.
+> Bot tự ghi log ra `data/logs/bot.log` (`utils/logger.ts`) - riêng biệt với pm2 logs. Cả hai đều rotate được.
 
-#### Bước 4A.11 — Cập nhật code sau này
+#### Bước 4A.11 - Cập nhật code sau này
 
 Khi sửa code (push lên GitHub):
 
@@ -557,15 +557,15 @@ Khi sửa code (push lên GitHub):
 ssh galaxy@103.213.xxx.xxx
 cd ~/galaxy-universe
 git pull
-npm install         # nếu có dep mới
-npm run build       # compile lại
+npm install     # nếu có dep mới
+npm run build   # compile lại
 pm2 restart galaxy
-pm2 logs galaxy     # check không lỗi
+pm2 logs galaxy # check không lỗi
 ```
 
 Khi restart, pm2 gửi SIGINT → bot shutdown gracefully (WAL checkpoint + close DB). An toàn.
 
-#### Bước 4A.12 — Backup database định kỳ (PHẢI CÓ)
+#### Bước 4A.12 - Backup database định kỳ (PHẢI CÓ)
 
 Bot đã có sẵn script `scripts/backup.js` dùng SQLite online backup API (an toàn để chạy khi bot đang live).
 
@@ -597,7 +597,7 @@ Save & exit. Cron sẽ chạy 3 AM mỗi đêm, backup ghi log ra `data/logs/bac
 
 Script tự prune backup cũ hơn 7 ngày → không cần quan tâm clean up.
 
-#### Bước 4A.13 — Bảo mật cơ bản
+#### Bước 4A.13 - Bảo mật cơ bản
 
 **Tắt SSH password login, dùng key:**
 
@@ -639,7 +639,7 @@ Save. Restart SSH:
 sudo systemctl restart ssh
 ```
 
-> Trước khi tắt password, **mở terminal mới và verify SSH bằng key vẫn được**. Nếu lỡ tay sai config, đừng đóng terminal hiện tại — bạn vẫn còn quyền sửa.
+> Trước khi tắt password, **mở terminal mới và verify SSH bằng key vẫn được**. Nếu lỡ tay sai config, đừng đóng terminal hiện tại - bạn vẫn còn quyền sửa.
 
 **Bật firewall:**
 
@@ -658,7 +658,7 @@ Bot không cần expose port nào (nó connect ra Discord, không listen). Chỉ
 
 Nếu bạn muốn skip phần sysadmin và chấp nhận trả nhiều hơn, Railway là option dễ nhất.
 
-#### Bước 4B.1 — Đẩy code lên GitHub
+#### Bước 4B.1 - Đẩy code lên GitHub
 
 ```bash
 git init
@@ -671,21 +671,21 @@ git push -u origin main
 
 Verify `.env` và `config.json` KHÔNG bị push (đã trong `.gitignore`).
 
-#### Bước 4B.2 — Tạo project Railway
+#### Bước 4B.2 - Tạo project Railway
 
 1. Vào https://railway.app, login bằng GitHub
 2. **New Project** → **Deploy from GitHub repo** → chọn repo
 3. Railway tự detect Node.js, bắt đầu build
 
-#### Bước 4B.3 — Set environment variables
+#### Bước 4B.3 - Set environment variables
 
 Trong project Railway, tab **Variables**, thêm:
 
 - `DISCORD_TOKEN` = token bot
-- `DATABASE_PATH` = `/data/galaxy.db` (không phải `./data/...` — Railway volume mount tại `/data`)
+- `DATABASE_PATH` = `/data/galaxy.db` (không phải `./data/...` - Railway volume mount tại `/data`)
 - `NODE_ENV` = `production`
 
-#### Bước 4B.4 — Tạo persistent volume (CỰC QUAN TRỌNG)
+#### Bước 4B.4 - Tạo persistent volume (CỰC QUAN TRỌNG)
 
 Không có cái này → mỗi lần deploy lại, file SQLite mất sạch (level, balance, void status... reset hết).
 
@@ -695,18 +695,18 @@ Không có cái này → mỗi lần deploy lại, file SQLite mất sạch (lev
 4. **Size:** 1 GB
 5. **Add**
 
-#### Bước 4B.5 — Set start command
+#### Bước 4B.5 - Set start command
 
 **Settings → Deploy:**
 
 - **Build Command:** `npm install && npm run build`
 - **Start Command:** `npm start`
 
-#### Bước 4B.6 — Push config.json
+#### Bước 4B.6 - Push config.json
 
 `config.json` trong `.gitignore`. Cách dễ: tạm comment dòng `config.json` trong `.gitignore`, commit `config.json` (chỉ chứa role/channel ID, không phải secret). **Đảm bảo `.env` vẫn trong gitignore.**
 
-#### Bước 4B.7 — Deploy
+#### Bước 4B.7 - Deploy
 
 Push commit mới → Railway tự build và deploy. Tab **Logs** xem tiến trình. Thấy `Logged in as...` là xong.
 
@@ -749,34 +749,34 @@ Cons: máy reboot/sleep/cúp điện = bot offline; ISP IP có thể đổi; kh�
 
 ### Khi sửa `vi.json`
 
-Phải restart bot — JSON load 1 lần lúc start.
+Phải restart bot - JSON load 1 lần lúc start.
 
 ### Khi sửa schema DB
 
 1. Tạo file mới `src/db/migrations/00X_tên_thay_đổi.sql`
-2. Restart bot — migration runner tự apply (wrap trong transaction)
+2. Restart bot - migration runner tự apply (wrap trong transaction)
 3. **KHÔNG sửa** migration cũ đã chạy (sẽ không re-run, mất sync với DB)
 
 ### Khi sửa `config.json`
 
-Restart bot — Zod validate lại lúc start.
+Restart bot - Zod validate lại lúc start.
 
 ### Lệnh pm2 hay dùng (production)
 
 ```bash
-pm2 status              # xem bot online không
-pm2 logs galaxy         # xem live logs
+pm2 status  # xem bot online không
+pm2 logs galaxy     # xem live logs
 pm2 logs galaxy --lines 100   # xem 100 log gần nhất
-pm2 restart galaxy      # restart bot (graceful — SIGINT trước)
-pm2 stop galaxy         # stop bot
-pm2 delete galaxy       # gỡ khỏi pm2
-pm2 monit               # dashboard CPU/RAM/log realtime
+pm2 restart galaxy  # restart bot (graceful - SIGINT trước)
+pm2 stop galaxy     # stop bot
+pm2 delete galaxy   # gỡ khỏi pm2
+pm2 monit   # dashboard CPU/RAM/log realtime
 ```
 
 ### Lệnh backup hay dùng
 
 ```bash
-npm run backup         # backup ngay
+npm run backup     # backup ngay
 npm run backup:test    # verify backup mới nhất đọc được
 ls -lh data/backups/   # check size + tuổi backup
 ```
@@ -792,10 +792,10 @@ sqlite> SELECT * FROM void_history ORDER BY released_at DESC LIMIT 10;
 sqlite> .quit
 ```
 
-> Đừng INSERT/UPDATE/DELETE qua CLI khi bot đang chạy — WAL mode cho phép concurrent reads, nhưng writes nên đi qua bot.
+> Đừng INSERT/UPDATE/DELETE qua CLI khi bot đang chạy - WAL mode cho phép concurrent reads, nhưng writes nên đi qua bot.
 
 ---
 
 ## Sẵn sàng cho bước tiếp
 
-Khi `g!ping`, `g!help`, `g!userinfo`, `g!setup jail`, `g!void`, `g!escape`, `g!free` chạy ngon và đã đi qua **DEPLOY_CHECKLIST.md** — báo lại để build **step 4: Level + Economy + Moderation + Tickets + Lunari void extensions** (theo thứ tự depth-first đã chốt).
+Khi `g!ping`, `g!help`, `g!userinfo`, `g!setup jail`, `g!void`, `g!escape`, `g!free` chạy ngon và đã đi qua **DEPLOY_CHECKLIST.md** - báo lại để build **step 4: Level + Economy + Moderation + Tickets + Lunari void extensions** (theo thứ tự depth-first đã chốt).

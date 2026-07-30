@@ -27,8 +27,8 @@ export const GuildSettingsRepo = {
   getOrCreate(guildId: string): GuildSettingsRow {
     let row = stmts.get.get(guildId);
     if (!row) {
-      stmts.insert.run(guildId, Date.now());
-      row = stmts.get.get(guildId)!;
+  stmts.insert.run(guildId, Date.now());
+  row = stmts.get.get(guildId)!;
     }
     return row;
   },

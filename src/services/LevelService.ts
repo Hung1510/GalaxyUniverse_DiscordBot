@@ -50,19 +50,19 @@ async function applyRoleRewards(
     if (member.roles.cache.has(r.role_id)) continue;
     const role = member.guild.roles.cache.get(r.role_id);
     if (!role) {
-      logger.warn(`Level-role reward ${r.role_id} for level ${r.level} no longer exists`);
-      continue;
+  logger.warn(`Level-role reward ${r.role_id} for level ${r.level} no longer exists`);
+  continue;
     }
     const me = member.guild.members.me;
     if (!me || me.roles.highest.position <= role.position) {
-      logger.warn(`Cannot grant level reward role ${role.name}: bot's highest role isn't above it`);
-      continue;
+  logger.warn(`Cannot grant level reward role ${role.name}: bot's highest role isn't above it`);
+  continue;
     }
     try {
-      await member.roles.add(role, `Level reward: reached level ${newLevel}`);
-      granted.push(role);
+  await member.roles.add(role, `Level reward: reached level ${newLevel}`);
+  granted.push(role);
     } catch (err) {
-      logger.warn(`Failed to grant level reward role ${role.name}:`, err);
+  logger.warn(`Failed to grant level reward role ${role.name}:`, err);
     }
   }
   return granted;
@@ -91,38 +91,38 @@ export const LevelService = {
     const newLevel = levelFromXp(afterRow.xp);
 
     if (newLevel <= oldLevel) {
-      return { xpGained, leveledUp: false, newLevel: oldLevel, granted: [] };
+  return { xpGained, leveledUp: false, newLevel: oldLevel, granted: [] };
     }
 
     UserRepo.setLevel(userId, newLevel);
 
     let granted: Role[] = [];
     if (message.member && message.inGuild()) {
-      try {
-        granted = await applyRoleRewards(message.member, newLevel);
-      } catch (err) {
+  try {
+    granted = await applyRoleRewards(message.member, newLevel);
+  } catch (err) {
 
-        logger.warn('Role rewards step threw:', err);
-      }
+    logger.warn('Role rewards step threw:', err);
+  }
 
-      try {
-        const reply = granted.length > 0
-          ? t('level.levelup_with_roles', {
-              user: `<@${userId}>`,
-              level: String(newLevel),
-              roles: granted.map((r) => `<@&${r.id}>`).join(', '),
-            })
-          : t('level.levelup', {
-              user: `<@${userId}>`,
-              level: String(newLevel),
-            });
-        await message.channel.send({
-          content: reply,
-          allowedMentions: { users: [userId], roles: [] },
-        });
-      } catch (err) {
-        logger.warn('Failed to post level-up message:', err);
-      }
+  try {
+    const reply = granted.length > 0
+  ? t('level.levelup_with_roles', {
+  user: `<@${userId}>`,
+  level: String(newLevel),
+  roles: granted.map((r) => `<@&${r.id}>`).join(', '),
+})
+  : t('level.levelup', {
+  user: `<@${userId}>`,
+  level: String(newLevel),
+});
+    await message.channel.send({
+  content: reply,
+  allowedMentions: { users: [userId], roles: [] },
+    });
+  } catch (err) {
+    logger.warn('Failed to post level-up message:', err);
+  }
     }
 
     return { xpGained, leveledUp: true, newLevel, granted };

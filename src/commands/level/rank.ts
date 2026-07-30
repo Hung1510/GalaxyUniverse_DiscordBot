@@ -27,30 +27,30 @@ const command: Command = {
 
     let member;
     try {
-      member = await ctx.guild.members.fetch(targetId);
+  member = await ctx.guild.members.fetch(targetId);
     } catch {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.user_not_found'))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('common.user_not_found'))] });
+  return;
     }
 
     const { row, rank, total, currentLevelXp, nextLevelXp } = LevelService.getStats(member.id);
 
     const embed = cosmicEmbed()
-      .setTitle(`🌠 ${member.user.tag}`)
-      .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
-      .addFields(
-        { name: 'Level', value: `**${row.level}**`, inline: true },
-        { name: 'XP', value: `**${row.xp.toLocaleString()}**`, inline: true },
-        {
-          name: 'Rank',
-          value: rank > 0 ? `**#${rank}** / ${total}` : '*chưa có XP*',
-          inline: true,
-        },
-        {
-          name: `Tiến độ tới level ${row.level + 1}`,
-          value: `\`${progressBar(currentLevelXp, nextLevelXp)}\`\n${currentLevelXp.toLocaleString()} / ${nextLevelXp.toLocaleString()} XP`,
-        },
-      );
+  .setTitle(`🌠 ${member.user.tag}`)
+  .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+  .addFields(
+    { name: 'Level', value: `**${row.level}**`, inline: true },
+    { name: 'XP', value: `**${row.xp.toLocaleString()}**`, inline: true },
+    {
+  name: 'Rank',
+  value: rank > 0 ? `**#${rank}** / ${total}` : '*chưa có XP*',
+  inline: true,
+    },
+    {
+  name: `Tiến độ tới level ${row.level + 1}`,
+  value: `\`${progressBar(currentLevelXp, nextLevelXp)}\`\n${currentLevelXp.toLocaleString()} / ${nextLevelXp.toLocaleString()} XP`,
+    },
+  );
 
     await ctx.message.reply({ embeds: [embed] });
   },

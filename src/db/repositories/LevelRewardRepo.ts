@@ -21,8 +21,8 @@ const stmts = {
   ),
   upsert: db.prepare<[string, number, string, number]>(
     `INSERT INTO level_role_rewards (guild_id, level, role_id, created_at)
-     VALUES (?, ?, ?, ?)
-     ON CONFLICT(guild_id, level) DO UPDATE SET role_id = excluded.role_id`,
+ VALUES (?, ?, ?, ?)
+ ON CONFLICT(guild_id, level) DO UPDATE SET role_id = excluded.role_id`,
   ),
   remove: db.prepare<[string, number]>(
     'DELETE FROM level_role_rewards WHERE guild_id = ? AND level = ?',

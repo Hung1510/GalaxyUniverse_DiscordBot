@@ -16,25 +16,25 @@ const command: Command = {
     const targetId = ctx.message.mentions.users.first()?.id ?? ctx.args[0] ?? ctx.member.id;
     let member;
     try {
-      member = await ctx.guild.members.fetch(targetId);
+  member = await ctx.guild.members.fetch(targetId);
     } catch {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.user_not_found'))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('common.user_not_found'))] });
+  return;
     }
 
     const dbUser = UserRepo.get(member.id);
 
     const embed = cosmicEmbed()
-      .setTitle(`👤 ${member.user.tag}`)
-      .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
-      .addFields(
-        { name: 'ID', value: member.id, inline: true },
-        { name: 'Vào server', value: `<t:${Math.floor((member.joinedTimestamp ?? Date.now()) / 1000)}:R>`, inline: true },
-        { name: 'Tài khoản tạo', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
-        { name: 'Level', value: String(dbUser?.level ?? 0), inline: true },
-        { name: 'XP', value: String(dbUser?.xp ?? 0), inline: true },
-        { name: 'Balance', value: String(dbUser?.balance ?? 0), inline: true },
-      );
+  .setTitle(`👤 ${member.user.tag}`)
+  .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+  .addFields(
+    { name: 'ID', value: member.id, inline: true },
+    { name: 'Vào server', value: `<t:${Math.floor((member.joinedTimestamp ?? Date.now()) / 1000)}:R>`, inline: true },
+    { name: 'Tài khoản tạo', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
+    { name: 'Level', value: String(dbUser?.level ?? 0), inline: true },
+    { name: 'XP', value: String(dbUser?.xp ?? 0), inline: true },
+    { name: 'Balance', value: String(dbUser?.balance ?? 0), inline: true },
+  );
     await ctx.message.reply({ embeds: [embed] });
   },
 };

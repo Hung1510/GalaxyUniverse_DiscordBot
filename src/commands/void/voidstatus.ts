@@ -17,14 +17,14 @@ const command: Command = {
     const sentence = VoidRepo.getSentence(targetId);
     const embed = cosmicEmbed().setTitle('⚖️ Void Status');
     if (!sentence) {
-      embed.setDescription(t('void.status_free', { target: `<@${targetId}>` }));
+  embed.setDescription(t('void.status_free', { target: `<@${targetId}>` }));
     } else {
-      embed.setDescription(t('void.status_jailed', {
-        target: `<@${targetId}>`,
-        remaining: String(sentence.remaining),
-        total: String(sentence.total_count),
-        reason: sentence.reason ?? '—',
-      }));
+  embed.setDescription(t('void.status_jailed', {
+    target: `<@${targetId}>`,
+    remaining: String(sentence.remaining),
+    total: String(sentence.total_count),
+    reason: sentence.reason ?? '-',
+  }));
     }
     await ctx.message.reply({ embeds: [embed] });
   },

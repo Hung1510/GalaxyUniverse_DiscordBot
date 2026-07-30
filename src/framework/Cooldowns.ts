@@ -6,7 +6,7 @@ export class Cooldowns {
     const expiry = this.store.get(key);
     const now = Date.now();
     if (expiry && expiry > now) {
-      return expiry - now;
+  return expiry - now;
     }
     this.store.set(key, now + cooldownSec * 1000);
     return 0;

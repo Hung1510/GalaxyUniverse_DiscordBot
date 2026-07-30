@@ -14,14 +14,14 @@ const command: Command = {
   async execute(ctx) {
     const settings = GuildSettingsRepo.get(ctx.guild.id);
     if (!settings?.jail_role_id || !settings.jail_channel_id) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('void.setup_first'))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('void.setup_first'))] });
+  return;
     }
     const working = await ctx.message.reply('🔄 Đang sync perms...');
     const synced = await VoidService.syncJailPermissions(ctx.guild, settings.jail_role_id, settings.jail_channel_id);
     await working.edit({
-      content: '',
-      embeds: [successEmbed(t('void.sync_done', { n: String(synced) }))],
+  content: '',
+  embeds: [successEmbed(t('void.sync_done', { n: String(synced) }))],
     });
   },
 };

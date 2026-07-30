@@ -33,8 +33,8 @@ async function loadFromDir(dir: string): Promise<void> {
   for (const entry of readdirSync(dir)) {
     const full = resolve(dir, entry);
     if (statSync(full).isDirectory()) {
-      await loadFromDir(full);
-      continue;
+  await loadFromDir(full);
+  continue;
     }
     if (!entry.endsWith('.js') && !entry.endsWith('.ts')) continue;
     if (entry.endsWith('.d.ts')) continue;
@@ -42,16 +42,16 @@ async function loadFromDir(dir: string): Promise<void> {
     const mod = (await import(pathToFileURL(full).href)) as { default?: Command };
     const cmd = mod.default;
     if (!cmd || typeof cmd.execute !== 'function') {
-      logger.warn(`Skipping ${basename(full)} — no default Command export.`);
-      continue;
+  logger.warn(`Skipping ${basename(full)} - no default Command export.`);
+  continue;
     }
     if (commands.has(cmd.name)) {
-      logger.warn(`Duplicate command name "${cmd.name}" — skipping ${basename(full)}.`);
-      continue;
+  logger.warn(`Duplicate command name "${cmd.name}" - skipping ${basename(full)}.`);
+  continue;
     }
     commands.set(cmd.name, cmd);
     for (const alias of cmd.aliases ?? []) {
-      aliases.set(alias, cmd.name);
+  aliases.set(alias, cmd.name);
     }
   }
 }
@@ -87,9 +87,9 @@ export async function handleMessage(client: Client<true>, message: Message): Pro
   if (command.cooldown && command.cooldown > 0) {
     const remaining = cooldowns.check(message.author.id, command.name, command.cooldown);
     if (remaining > 0) {
-      const secs = Math.ceil(remaining / 1000);
-      await message.reply({ embeds: [errorEmbed(t('common.cooldown', { secs: String(secs) }))] }).catch(() => {});
-      return;
+  const secs = Math.ceil(remaining / 1000);
+  await message.reply({ embeds: [errorEmbed(t('common.cooldown', { secs: String(secs) }))] }).catch(() => {});
+  return;
     }
   }
 
@@ -108,16 +108,16 @@ export async function handleMessage(client: Client<true>, message: Message): Pro
     await command.execute(ctx);
     metrics.recordCommand(command.name,  true, Date.now() - t0);
     logger.info(
-      `cmd=${command.name} user=${message.author.tag} guild=${message.guildId} perm=${getPermissionLevel(member)} ok dur=${Date.now() - t0}ms`,
+  `cmd=${command.name} user=${message.author.tag} guild=${message.guildId} perm=${getPermissionLevel(member)} ok dur=${Date.now() - t0}ms`,
     );
   } catch (err) {
     metrics.recordCommand(command.name,  false, Date.now() - t0);
     logger.error(
-      `cmd=${command.name} user=${message.author.tag} guild=${message.guildId} FAILED`,
-      err,
+  `cmd=${command.name} user=${message.author.tag} guild=${message.guildId} FAILED`,
+  err,
     );
     await message
-      .reply({ embeds: [errorEmbed(t('common.internal_error'))] })
-      .catch(() => {});
+  .reply({ embeds: [errorEmbed(t('common.internal_error'))] })
+  .catch(() => {});
   }
 }

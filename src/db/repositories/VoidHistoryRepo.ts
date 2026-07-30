@@ -20,8 +20,8 @@ const stmts = {
     string, string, number, number, string | null, string, string | null, string, number, number
   ]>(
     `INSERT INTO void_history
-     (user_id, guild_id, total_count, completed, reason, jailed_by, released_by, release_type, jailed_at, released_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+ (user_id, guild_id, total_count, completed, reason, jailed_by, released_by, release_type, jailed_at, released_at)
+ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ),
   byUser: db.prepare<[string, number], VoidHistoryRow>(
     'SELECT * FROM void_history WHERE user_id = ? ORDER BY released_at DESC LIMIT ?',
@@ -34,9 +34,9 @@ const stmts = {
 export const VoidHistoryRepo = {
   record(row: Omit<VoidHistoryRow, 'id'>): void {
     stmts.insert.run(
-      row.user_id, row.guild_id, row.total_count, row.completed,
-      row.reason, row.jailed_by, row.released_by, row.release_type,
-      row.jailed_at, row.released_at,
+  row.user_id, row.guild_id, row.total_count, row.completed,
+  row.reason, row.jailed_by, row.released_by, row.release_type,
+  row.jailed_at, row.released_at,
     );
   },
   byUser(userId: string, limit = 10): VoidHistoryRow[] {

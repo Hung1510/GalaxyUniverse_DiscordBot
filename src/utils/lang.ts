@@ -14,9 +14,9 @@ function resolveKey(key: string): string | undefined {
   let cursor: unknown = strings;
   for (const seg of segments) {
     if (cursor && typeof cursor === 'object' && seg in (cursor as object)) {
-      cursor = (cursor as Record<string, unknown>)[seg];
+  cursor = (cursor as Record<string, unknown>)[seg];
     } else {
-      return undefined;
+  return undefined;
     }
   }
   return typeof cursor === 'string' ? cursor : undefined;
@@ -30,7 +30,7 @@ export function t(key: string, vars?: Record<string, string>): string {
   }
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {
-      str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+  str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
     }
   }
   return str;

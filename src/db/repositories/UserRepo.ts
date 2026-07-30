@@ -36,18 +36,18 @@ const stmts = {
 
   topByXp: db.prepare<[number, number], LeaderboardRow>(
     `SELECT user_id, xp, level,
-            RANK() OVER (ORDER BY xp DESC) AS rank
-     FROM users
-     WHERE xp > 0
-     ORDER BY xp DESC
-     LIMIT ? OFFSET ?`,
+RANK() OVER (ORDER BY xp DESC) AS rank
+ FROM users
+ WHERE xp > 0
+ ORDER BY xp DESC
+ LIMIT ? OFFSET ?`,
   ),
 
   rankOf: db.prepare<[string], { rank: number }>(
     `SELECT (
-       SELECT COUNT(*) + 1 FROM users u2
-       WHERE u2.xp > (SELECT xp FROM users WHERE user_id = ?)
-     ) AS rank`,
+   SELECT COUNT(*) + 1 FROM users u2
+   WHERE u2.xp > (SELECT xp FROM users WHERE user_id = ?)
+ ) AS rank`,
   ),
   countWithXp: db.prepare<[], { c: number }>(
     'SELECT COUNT(*) AS c FROM users WHERE xp > 0',
@@ -61,8 +61,8 @@ export const UserRepo = {
   getOrCreate(userId: string): UserRow {
     let row = stmts.get.get(userId);
     if (!row) {
-      stmts.insert.run(userId, Date.now());
-      row = stmts.get.get(userId)!;
+  stmts.insert.run(userId, Date.now());
+  row = stmts.get.get(userId)!;
     }
     return row;
   },

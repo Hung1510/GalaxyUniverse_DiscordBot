@@ -15,7 +15,7 @@ let shuttingDown = false;
 async function shutdown(signal: string, client: Client | null): Promise<void> {
   if (shuttingDown) return;
   shuttingDown = true;
-  logger.info(`Received ${signal} — shutting down...`);
+  logger.info(`Received ${signal} - shutting down...`);
 
   await new Promise((r) => setTimeout(r, 1500));
 
@@ -27,8 +27,8 @@ async function shutdown(signal: string, client: Client | null): Promise<void> {
 
   try {
     if (client) {
-      await client.destroy();
-      logger.info('Discord client destroyed.');
+  await client.destroy();
+  logger.info('Discord client destroyed.');
     }
   } catch (err) {
     logger.error('Error destroying client:', err);
@@ -47,10 +47,10 @@ async function shutdown(signal: string, client: Client | null): Promise<void> {
 async function main(): Promise<void> {
     const client = new Client({
     intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent,
-      GatewayIntentBits.GuildMembers,
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.GuildMessages,
+  GatewayIntentBits.MessageContent,
+  GatewayIntentBits.GuildMembers,
     ],
     partials: [Partials.Channel, Partials.Message],
   });

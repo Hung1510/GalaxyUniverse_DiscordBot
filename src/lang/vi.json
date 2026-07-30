@@ -45,7 +45,7 @@
     "no_rewards": "Chưa có level role reward nào. Dùng `g!levelrole add <level> @role` để thêm.",
     "role_everyone": "Không thể dùng @everyone làm reward.",
     "role_managed": "Role này được Discord quản lý (bot/integration role), không thể assign manually.",
-    "role_too_high": "Role **{role}** cao hơn hoặc bằng role cao nhất của bot — bot không gán được. Move role bot lên trên đã.",
+    "role_too_high": "Role **{role}** cao hơn hoặc bằng role cao nhất của bot - bot không gán được. Move role bot lên trên đã.",
     "reward_set": "✅ Đã set: Level **{level}** → {role}",
     "reward_removed": "✅ Đã xóa reward ở level **{level}**.",
     "reward_not_found": "Không có reward nào ở level **{level}**."

@@ -46,7 +46,7 @@ function write(level: LogLevel, msg: string, rest: unknown[]): void {
 
   if (fileLoggingAvailable) {
     try {
-      appendFileSync(LOG_FILE, line + '\n', 'utf8');
+  appendFileSync(LOG_FILE, line + '\n', 'utf8');
     } catch {
     }
   }

@@ -18,26 +18,26 @@ const command: Command = {
     const levelArg = ctx.args[1];
 
     if (!targetId || !levelArg) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!setlevel @user <level>' }))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!setlevel @user <level>' }))] });
+  return;
     }
 
     const level = parseInt(levelArg, 10);
     if (isNaN(level) || level < 0 || level > MAX_LEVEL) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('level.invalid_level', { max: String(MAX_LEVEL) }))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('level.invalid_level', { max: String(MAX_LEVEL) }))] });
+  return;
     }
 
     try {
-      await ctx.guild.members.fetch(targetId);
+  await ctx.guild.members.fetch(targetId);
     } catch {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.user_not_found'))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('common.user_not_found'))] });
+  return;
     }
 
     LevelService.setLevel(targetId, level);
     await ctx.message.reply({
-      embeds: [successEmbed(t('level.set_done', { target: `<@${targetId}>`, level: String(level) }))],
+  embeds: [successEmbed(t('level.set_done', { target: `<@${targetId}>`, level: String(level) }))],
     });
   },
 };

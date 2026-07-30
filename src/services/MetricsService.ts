@@ -17,8 +17,8 @@ class MetricsStore {
   recordCommand(name: string, ok: boolean, durMs: number): void {
     let m = this.commands.get(name);
     if (!m) {
-      m = { total: 0, succeeded: 0, failed: 0, totalDurationMs: 0, hourly: new Map() };
-      this.commands.set(name, m);
+  m = { total: 0, succeeded: 0, failed: 0, totalDurationMs: 0, hourly: new Map() };
+  this.commands.set(name, m);
     }
     m.total++;
     if (ok) m.succeeded++; else m.failed++;
@@ -29,25 +29,25 @@ class MetricsStore {
 
     const cutoff = hourKey - KEEP_HOURS * HOUR_MS;
     for (const k of m.hourly.keys()) {
-      if (k < cutoff) m.hourly.delete(k);
+  if (k < cutoff) m.hourly.delete(k);
     }
   }
 
   snapshot(): Array<{ name: string; total: number; succeeded: number; failed: number; avgMs: number; last24h: number }> {
     return Array.from(this.commands.entries())
-      .map(([name, m]) => {
-        let last24h = 0;
-        for (const v of m.hourly.values()) last24h += v;
-        return {
-          name,
-          total: m.total,
-          succeeded: m.succeeded,
-          failed: m.failed,
-          avgMs: m.total > 0 ? Math.round(m.totalDurationMs / m.total) : 0,
-          last24h,
-        };
-      })
-      .sort((a, b) => b.total - a.total);
+  .map(([name, m]) => {
+    let last24h = 0;
+    for (const v of m.hourly.values()) last24h += v;
+    return {
+  name,
+  total: m.total,
+  succeeded: m.succeeded,
+  failed: m.failed,
+  avgMs: m.total > 0 ? Math.round(m.totalDurationMs / m.total) : 0,
+  last24h,
+    };
+  })
+  .sort((a, b) => b.total - a.total);
   }
 
   uptimeMs(): number {

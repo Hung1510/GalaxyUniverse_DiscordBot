@@ -20,14 +20,14 @@ export async function loadEvents(client: Client): Promise<void> {
     if (!file.endsWith('.js') && !file.endsWith('.ts')) continue;
     if (file.endsWith('.d.ts')) continue;
     const mod = (await import(pathToFileURL(resolve(dir, file)).href)) as {
-      default?: EventHandler<keyof ClientEvents>;
+  default?: EventHandler<keyof ClientEvents>;
     };
     const ev = mod.default;
     if (!ev) continue;
     if (ev.once) {
-      client.once(ev.name, (...args) => Promise.resolve(ev.execute(client, ...args)).catch((e) => logger.error(`event ${ev.name} threw:`, e)));
+  client.once(ev.name, (...args) => Promise.resolve(ev.execute(client, ...args)).catch((e) => logger.error(`event ${ev.name} threw:`, e)));
     } else {
-      client.on(ev.name, (...args) => Promise.resolve(ev.execute(client, ...args)).catch((e) => logger.error(`event ${ev.name} threw:`, e)));
+  client.on(ev.name, (...args) => Promise.resolve(ev.execute(client, ...args)).catch((e) => logger.error(`event ${ev.name} threw:`, e)));
     }
     count++;
   }

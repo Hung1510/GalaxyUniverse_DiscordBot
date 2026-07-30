@@ -20,27 +20,27 @@ const command: Command = {
     const amountArg = ctx.args[1];
 
     if (!targetId || !amountArg) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!givexp @user <amount>' }))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!givexp @user <amount>' }))] });
+  return;
     }
 
     const amount = parseInt(amountArg, 10);
     if (isNaN(amount) || Math.abs(amount) > MAX_GRANT) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('level.invalid_xp', { max: MAX_GRANT.toLocaleString() }))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('level.invalid_xp', { max: MAX_GRANT.toLocaleString() }))] });
+  return;
     }
 
     const { newXp, oldLevel, newLevel } = LevelService.giveXp(targetId, amount);
     const levelNote = oldLevel !== newLevel
-      ? ` (Level: **${oldLevel}** → **${newLevel}**)`
-      : '';
+  ? ` (Level: **${oldLevel}** → **${newLevel}**)`
+  : '';
 
     await ctx.message.reply({
-      embeds: [successEmbed(t('level.givexp_done', {
-        target: `<@${targetId}>`,
-        amount: amount.toLocaleString(),
-        newXp: newXp.toLocaleString(),
-      }) + levelNote)],
+  embeds: [successEmbed(t('level.givexp_done', {
+    target: `<@${targetId}>`,
+    amount: amount.toLocaleString(),
+    newXp: newXp.toLocaleString(),
+  }) + levelNote)],
     });
   },
 };

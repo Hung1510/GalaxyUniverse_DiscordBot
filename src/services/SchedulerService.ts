@@ -15,7 +15,7 @@ export function registerTaskHandler(taskType: string, handler: TaskHandler): voi
 async function processTask(client: Client<true>, task: ScheduledTaskRow): Promise<void> {
   const handler = handlers.get(task.task_type);
   if (!handler) {
-    logger.warn(`Scheduled task type "${task.task_type}" has no handler — removing.`);
+    logger.warn(`Scheduled task type "${task.task_type}" has no handler - removing.`);
     ScheduledTaskRepo.remove(task.id);
     return;
   }

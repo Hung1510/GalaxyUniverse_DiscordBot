@@ -14,13 +14,13 @@ const command: Command = {
   async execute(ctx) {
     const targetId = ctx.message.mentions.users.first()?.id ?? ctx.args[0];
     if (!targetId) {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!resetlevel @user' }))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!resetlevel @user' }))] });
+  return;
     }
 
     LevelService.reset(targetId);
     await ctx.message.reply({
-      embeds: [successEmbed(t('level.reset_done', { target: `<@${targetId}>` }))],
+  embeds: [successEmbed(t('level.reset_done', { target: `<@${targetId}>` }))],
     });
   },
 };

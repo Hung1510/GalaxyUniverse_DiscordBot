@@ -14,35 +14,35 @@ const command: Command = {
   async execute(ctx) {
     const sub = ctx.args[0]?.toLowerCase();
     if (sub !== 'jail') {
-      await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!setup jail' }))] });
-      return;
+  await ctx.message.reply({ embeds: [errorEmbed(t('common.invalid_args', { usage: 'g!setup jail' }))] });
+  return;
     }
 
     const working = await ctx.message.reply('🛠️ Đang setup Void, đợi xíu...');
     const result = await VoidService.setup(ctx.guild);
 
     if (!result.ok) {
-      if (result.reason === 'already_setup') {
-        await working.edit({ content: '', embeds: [errorEmbed(t('void.setup_already'))] });
-        return;
-      }
-      if (result.reason === 'missing_perms') {
-        await working.edit({
-          content: '',
-          embeds: [errorEmbed(t('void.setup_missing_perms', { perms: result.missing?.join(', ') ?? '?' }))],
-        });
-        return;
-      }
-      return;
+  if (result.reason === 'already_setup') {
+    await working.edit({ content: '', embeds: [errorEmbed(t('void.setup_already'))] });
+    return;
+  }
+  if (result.reason === 'missing_perms') {
+    await working.edit({
+  content: '',
+  embeds: [errorEmbed(t('void.setup_missing_perms', { perms: result.missing?.join(', ') ?? '?' }))],
+    });
+    return;
+  }
+  return;
     }
 
     await working.edit({
-      content: '',
-      embeds: [successEmbed(t('void.setup_done', {
-        role: `<@&${result.roleId}>`,
-        channel: `<#${result.channelId}>`,
-        n: String(result.channelsSynced),
-      }))],
+  content: '',
+  embeds: [successEmbed(t('void.setup_done', {
+    role: `<@&${result.roleId}>`,
+    channel: `<#${result.channelId}>`,
+    n: String(result.channelsSynced),
+  }))],
     });
   },
 };

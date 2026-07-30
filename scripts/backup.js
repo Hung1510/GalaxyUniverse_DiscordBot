@@ -21,7 +21,7 @@ async function main() {
   mkdirSync(BACKUP_DIR, { recursive: true });
   const outPath = join(BACKUP_DIR, `galaxy-${ts()}.db`);
 
-  console.log(`[backup] Source:      ${DB_PATH}`);
+  console.log(`[backup] Source:  ${DB_PATH}`);
   console.log(`[backup] Destination: ${outPath}`);
 
   const db = new Database(DB_PATH, { readonly: true });
@@ -46,8 +46,8 @@ async function main() {
     if (!file.startsWith('galaxy-') || !file.endsWith('.db')) continue;
     const full = join(BACKUP_DIR, file);
     if (statSync(full).mtimeMs < cutoff) {
-      unlinkSync(full);
-      pruned++;
+  unlinkSync(full);
+  pruned++;
     }
   }
   if (pruned > 0) {

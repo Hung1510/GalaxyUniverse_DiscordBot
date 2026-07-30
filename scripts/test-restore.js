@@ -10,9 +10,9 @@ function main() {
   let files;
   try {
     files = readdirSync(BACKUP_DIR)
-      .filter((f) => f.startsWith('galaxy-') && f.endsWith('.db'))
-      .map((f) => ({ f, mtime: statSync(join(BACKUP_DIR, f)).mtimeMs }))
-      .sort((a, b) => b.mtime - a.mtime);
+  .filter((f) => f.startsWith('galaxy-') && f.endsWith('.db'))
+  .map((f) => ({ f, mtime: statSync(join(BACKUP_DIR, f)).mtimeMs }))
+  .sort((a, b) => b.mtime - a.mtime);
   } catch (err) {
     console.error(`[restore-test] No backup directory yet (${BACKUP_DIR}).`);
     console.error('[restore-test] Run `npm run backup` first.');
@@ -30,12 +30,12 @@ function main() {
   const db = new Database(latest, { readonly: true });
   try {
     const tables = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+  "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
     ).all();
     console.log(`[restore-test] Tables (${tables.length}):`);
     for (const t of tables) {
-      const count = db.prepare(`SELECT COUNT(*) AS n FROM "${t.name}"`).get();
-      console.log(`  - ${t.name}: ${count.n} rows`);
+  const count = db.prepare(`SELECT COUNT(*) AS n FROM "${t.name}"`).get();
+  console.log(`  - ${t.name}: ${count.n} rows`);
     }
 
     const mig = db.prepare('SELECT filename FROM _migrations ORDER BY filename').all();

@@ -4,21 +4,21 @@ Run through this **once** before your first Onidel deploy, and again any time yo
 
 ## Code is ready (this drop covers these)
 
-- [x] **#1** Graceful shutdown — SIGINT/SIGTERM handlers in `index.ts`, `closeDatabase()` checkpoint
-- [x] **#1** Restart-safe scheduler — `SchedulerService` + `scheduled_tasks` table
+- [x] **#1** Graceful shutdown - SIGINT/SIGTERM handlers in `index.ts`, `closeDatabase()` checkpoint
+- [x] **#1** Restart-safe scheduler - `SchedulerService` + `scheduled_tasks` table
 - [x] **#2** Global error handlers + per-command try/catch
-- [x] **#3** Backup script — `npm run backup`, `npm run backup:test`
-- [x] **#4** Env validation — Zod schemas, fail-fast on bad config
-- [x] **#5** Reconnect logging — 4 shard event handlers
-- [x] **#6** File logging — `data/logs/bot.log`
-- [x] **#7** Config view — `g!config`
-- [x] **#8** Mod-log channel + audit DB — `ModLogService`, `void_history`
-- [x] **#9** Startup permission audit — `PermissionAuditService`
-- [x] **#11** Abuse-vector hardening — `VoidService.jail()` refuses bots/self/higher-role
+- [x] **#3** Backup script - `npm run backup`, `npm run backup:test`
+- [x] **#4** Env validation - Zod schemas, fail-fast on bad config
+- [x] **#5** Reconnect logging - 4 shard event handlers
+- [x] **#6** File logging - `data/logs/bot.log`
+- [x] **#7** Config view - `g!config`
+- [x] **#8** Mod-log channel + audit DB - `ModLogService`, `void_history`
+- [x] **#9** Startup permission audit - `PermissionAuditService`
+- [x] **#11** Abuse-vector hardening - `VoidService.jail()` refuses bots/self/higher-role
 - [x] **#12** Health info on ping
 - [x] **#14** README
 - [x] **#15** Expanded .gitignore
-- [x] **#17** Metrics — `g!stats`
+- [x] **#17** Metrics - `g!stats`
 
 ## You must do these manually before deploy
 
@@ -28,12 +28,12 @@ The "what if owner accidentally removes the bot" rehearsal.
 
 1. Create a temporary test guild (free, takes 30 seconds)
 2. Invite your bot
-3. Run `g!ping` — should respond
-4. Run `g!setup jail` — should create role + channel
+3. Run `g!ping` - should respond
+4. Run `g!setup jail` - should create role + channel
 5. **Kick the bot from the guild**
 6. **Re-invite it**
-7. Run `g!config` — verify the DB still remembers the jail IDs (they'll be stale because the role was deleted)
-8. Run `g!setup jail` again — should detect "already_setup" but the role doesn't exist. **EXPECTED CURRENT BEHAVIOR: this returns "already setup" but the role is gone.** This is a known limitation — fix later by adding a `g!setup jail --force` flag or validating role existence in setup.
+7. Run `g!config` - verify the DB still remembers the jail IDs (they'll be stale because the role was deleted)
+8. Run `g!setup jail` again - should detect "already_setup" but the role doesn't exist. **EXPECTED CURRENT BEHAVIOR: this returns "already setup" but the role is gone.** This is a known limitation - fix later by adding a `g!setup jail --force` flag or validating role existence in setup.
 9. Delete the test guild when done
 
 ### Migration sanity (#13)
@@ -42,7 +42,7 @@ The "what if owner accidentally removes the bot" rehearsal.
 2. `rm data/galaxy.db data/galaxy.db-wal data/galaxy.db-shm` (or just rename)
 3. Start the bot fresh
 4. It should run all three migrations cleanly (`001_initial`, `002_void`, `003_audit`)
-5. Run `g!setup jail`, `g!void @alt 1 test`, `g!free @alt` — verify roundtrip works on a clean DB
+5. Run `g!setup jail`, `g!void @alt 1 test`, `g!free @alt` - verify roundtrip works on a clean DB
 6. Restore your dev DB: `mv /tmp/galaxy.db.bak data/galaxy.db`
 
 ### Disallowed-intents test
@@ -71,7 +71,7 @@ These go in `SETUP.md` and aren't repeated here, but verify:
 - [ ] Non-root user created (`galaxy` or similar)
 - [ ] Node 20+ installed
 - [ ] `pm2` installed globally
-- [ ] **`pm2 install pm2-logrotate`** — without this, pm2 logs grow unbounded (item #6)
+- [ ] **`pm2 install pm2-logrotate`** - without this, pm2 logs grow unbounded (item #6)
   - Set rotation: `pm2 set pm2-logrotate:max_size 10M`
   - Set retention: `pm2 set pm2-logrotate:retain 14`
 - [ ] Cron entry for `scripts/backup.js`:
@@ -82,7 +82,7 @@ These go in `SETUP.md` and aren't repeated here, but verify:
 - [ ] UFW firewall: allow 22 + nothing else (Discord is outbound only)
 - [ ] `pm2 startup` + `pm2 save` so bot restarts on VPS reboot
 
-## Deferred — do after deploy is stable
+## Deferred - do after deploy is stable
 
 ### #10 Cooldown survival across restarts
 
@@ -90,7 +90,7 @@ Currently `Cooldowns` is in-memory. Fine for 3-second command cooldowns. **Becom
 - Daily rewards (when economy ships) → use `UserRepo.last_daily`
 - Hour-long rate limits
 
-Action: when you build economy, daily rewards use DB column. Don't try to make Cooldowns class survive restarts — wrong abstraction.
+Action: when you build economy, daily rewards use DB column. Don't try to make Cooldowns class survive restarts - wrong abstraction.
 
 ### #18 Owner-only eval command
 
@@ -110,17 +110,17 @@ Free tier handles tons of errors/month. Worth adding after first week if you see
 ```bash
 npm install @sentry/node
 ```
-Initialize at top of `index.ts`, set `SENTRY_DSN` env. Won't cover this here — read Sentry's Node docs.
+Initialize at top of `index.ts`, set `SENTRY_DSN` env. Won't cover this here - read Sentry's Node docs.
 
-## After deploy — week 1 monitoring
+## After deploy - week 1 monitoring
 
 Daily for the first week, check:
 
 ```bash
-pm2 status                              # is bot up?
+pm2 status# is bot up?
 pm2 logs galaxy --lines 100 --nostream  # any errors?
-ls -lh data/galaxy.db data/backups/     # DB growing? backups landing?
-df -h                                    # VPS disk OK?
+ls -lh data/galaxy.db data/backups/ # DB growing? backups landing?
+df -h# VPS disk OK?
 ```
 
 Any unusual pattern in `g!stats` (especially failure rates above ~1%) → investigate.
